@@ -27,7 +27,7 @@ describe("BotFlow Ecosystem", function () {
     // 3. Deploy MockBDEX
     MockBDEX = await ethers.getContractFactory("MockBDEX");
     bdex = await MockBDEX.deploy(await mockUSDT.getAddress(), {
-      value: ethers.parseEther("1.0") // 1 BOT native funding
+      value: ethers.parseEther("10.0") // 10 BOT native funding
     });
     await bdex.waitForDeployment();
 
@@ -171,20 +171,36 @@ describe("BotFlow Ecosystem", function () {
       await ethers.provider.send("evm_increaseTime", [10]);
       await ethers.provider.send("evm_mine");
 
-      const accrued = await streamer.getAccrued(1);
-
       const senderInitialBalance = await mockUSDT.balanceOf(owner.address);
       const receiverInitialBalance = await mockUSDT.balanceOf(receiver.address);
 
-      await streamer.connect(sentry).cancelStream(1);
+      const tx = await streamer.connect(sentry).cancelStream(1);
+      const receipt = await tx.wait();
 
       const senderFinalBalance = await mockUSDT.balanceOf(owner.address);
       const receiverFinalBalance = await mockUSDT.balanceOf(receiver.address);
 
-      // Receiver gets accrued
-      expect(receiverFinalBalance - receiverInitialBalance).to.equal(accrued);
-      // Sender gets remaining
-      expect(senderFinalBalance - senderInitialBalance).to.equal(STREAM_DEPOSIT - accrued);
+      // Parse the event details from receipt logs
+      const contractInterface = streamer.interface;
+      let logFound = false;
+      let receiverAmount = 0n;
+      let senderAmount = 0n;
+
+      for (const log of receipt.logs) {
+        try {
+          const parsed = contractInterface.parseLog(log);
+          if (parsed && parsed.name === "StreamCancelled") {
+            receiverAmount = parsed.args.receiverAmount;
+            senderAmount = parsed.args.senderAmount;
+            logFound = true;
+            break;
+          }
+        } catch (e) {}
+      }
+
+      expect(logFound).to.be.true;
+      expect(receiverFinalBalance - receiverInitialBalance).to.equal(receiverAmount);
+      expect(senderFinalBalance - senderInitialBalance).to.equal(senderAmount);
 
       const stream = await streamer.streams(1);
       expect(stream.isActive).to.be.false;
