@@ -1,0 +1,915 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Zap, 
+  RefreshCw, 
+  ShieldAlert, 
+  ShieldCheck, 
+  ArrowDownUp, 
+  DollarSign, 
+  Coins, 
+  Activity, 
+  AlertTriangle 
+} from 'lucide-react';
+import { ethers } from 'ethers';
+
+// Fallback configuration
+const DEFAULT_RPC = "https://rpc.botchain.ai";
+const SENTRY_API_URL = "http://localhost:4000";
+
+// Mock ABI for minimal interactions
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function approve(address, uint256) returns (bool)",
+  "function allowance(address, address) view returns (uint256)"
+];
+
+const STREAMER_ABI = [
+  "function createStream(address receiver, address token, uint256 deposit, uint256 ratePerSecond, address sentryNode) returns (uint256)",
+  "function withdrawFromStream(uint256 streamId, uint256 amount)",
+  "function pauseStream(uint256 streamId)",
+  "function resumeStream(uint256 streamId)",
+  "function cancelStream(uint256 streamId)",
+  "function getAccrued(uint256 streamId) view returns (uint256)",
+  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isActive)"
+];
+
+const BDEX_ABI = [
+  "function swapBOTForUSDT() payable",
+  "function swapUSDTForBOT(uint256 usdtAmount)",
+  "function rate() view returns (uint256)"
+];
+
+// Initial Sandbox Mock Streams
+const INITIAL_SANDBOX_STREAMS = [
+  {
+    id: 1,
+    sender: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    tokenName: "USDT",
+    deposit: 500,
+    ratePerSecond: 0.05, // 0.05 USDT per sec
+    startTime: Date.now() - 3600 * 1000, // 1 hour ago
+    stopTime: Date.now() + 3600 * 1000 * 9, // 9 hours left
+    withdrawn: 30,
+    isPaused: false,
+    isActive: true,
+    sentryNode: "0x15d34AAf54f6577393b74d6A22e18517860D268A",
+    accruedAtLastUpdate: 180,
+    lastUpdateTime: Date.now() - 3600 * 1000
+  }
+];
+
+function App() {
+  // Web3 state
+  const [account, setAccount] = useState("");
+  const [network, setNetwork] = useState("Sandbox Mode");
+  const [provider, setProvider] = useState(null);
+  const [isSandbox, setIsSandbox] = useState(true);
+  
+  // Contracts address state
+  const [streamerAddr, setStreamerAddr] = useState(import.meta.env.VITE_STREAMER_CONTRACT_ADDRESS || "");
+  const [usdtAddr, setUsdtAddr] = useState(import.meta.env.VITE_MOCK_USDT_ADDRESS || "");
+  const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_MOCK_BDEX_ADDRESS || "");
+
+  // Balance states
+  const [botBalance, setBotBalance] = useState("0.0");
+  const [usdtBalance, setUsdtBalance] = useState("0.0");
+
+  // Streams state
+  const [streams, setStreams] = useState(INITIAL_SANDBOX_STREAMS);
+  const [activeStreamId, setActiveStreamId] = useState(1);
+  const [newStream, setNewStream] = useState({
+    receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    deposit: "100",
+    rate: "0.1",
+    sentry: "0x15d34AAf54f6577393b74d6A22e18517860D268A"
+  });
+
+  // Swap State
+  const [swapFrom, setSwapFrom] = useState("BOT");
+  const [swapAmount, setSwapAmount] = useState("");
+  const [swapEstimated, setSwapEstimated] = useState("");
+
+  // Sentry Node Integration State
+  const [sentryStatus, setSentryStatus] = useState("HEALTHY");
+  const [sentryAddress, setSentryAddress] = useState("0x15d34AAf54f6577393b74d6A22e18517860D268A");
+  const [sentryLogs, setSentryLogs] = useState([
+    { timestamp: new Date().toISOString(), type: "INFO", message: "Sentry dashboard initialized. Waiting for connection..." }
+  ]);
+
+  // Real-time ticking counter states
+  const [tickerAccrued, setTickerAccrued] = useState(0);
+  const [tickerClaimable, setTickerClaimable] = useState(0);
+  
+  // Wallet Loading states
+  const [loading, setLoading] = useState(false);
+  
+  // Refs
+  const tickerIntervalRef = useRef(null);
+
+  // Connect MetaMask
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      alert("MetaMask is not installed. Running in Sandbox Mode.");
+      return;
+    }
+    try {
+      setLoading(true);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const web3Provider = new ethers.BrowserProvider(window.ethereum);
+      const net = await web3Provider.getNetwork();
+      
+      setAccount(accounts[0]);
+      setProvider(web3Provider);
+      setIsSandbox(false);
+      setNetwork(net.name === "unknown" ? `Chain ID: ${net.chainId}` : net.name);
+      
+      // Load balances
+      await updateBalances(accounts[0], web3Provider);
+      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on network ${net.name}`);
+    } catch (error) {
+      console.error(error);
+      addSentryLog("ERROR", `Failed to connect wallet: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Disconnect / Reset back to Sandbox
+  const resetToSandbox = () => {
+    setAccount("");
+    setNetwork("Sandbox Mode");
+    setProvider(null);
+    setIsSandbox(true);
+    setBotBalance("100.0");
+    setUsdtBalance("5000.0");
+    setStreams(INITIAL_SANDBOX_STREAMS);
+    setActiveStreamId(1);
+    addSentryLog("INFO", "Reset to Sandbox Environment.");
+  };
+
+  // Fetch balances
+  const updateBalances = async (addr, web3Provider) => {
+    if (!addr || !web3Provider) return;
+    try {
+      const balanceWei = await web3Provider.getBalance(addr);
+      setBotBalance(parseFloat(ethers.formatEther(balanceWei)).toFixed(4));
+      
+      if (usdtAddr) {
+        const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, web3Provider);
+        const usdtBal = await tokenContract.balanceOf(addr);
+        setUsdtBalance(parseFloat(ethers.formatUnits(usdtBal, 6)).toFixed(2));
+      }
+    } catch (e) {
+      console.error("Balance fetch error:", e);
+    }
+  };
+
+  // Fetch Sentry Server Status and Logs
+  const fetchSentryData = async () => {
+    try {
+      const resStatus = await fetch(`${SENTRY_API_URL}/status`);
+      const statusData = await resStatus.json();
+      setSentryStatus(statusData.providerStatus);
+      if (statusData.sentryAddress) {
+        setSentryAddress(statusData.sentryAddress);
+      }
+
+      const resLogs = await fetch(`${SENTRY_API_URL}/logs`);
+      const logsData = await resLogs.json();
+      setSentryLogs(logsData);
+    } catch (err) {
+      // Sentry server offline - keep logs clean but don't crash
+    }
+  };
+
+  const addSentryLog = (type, message) => {
+    setSentryLogs(prev => [
+      { timestamp: new Date().toISOString(), type, message },
+      ...prev.slice(0, 49)
+    ]);
+  };
+
+  useEffect(() => {
+    if (isSandbox) {
+      setBotBalance("100.0000");
+      setUsdtBalance("5000.00");
+    }
+    
+    // Poll Sentry API
+    const interval = setInterval(fetchSentryData, 3000);
+    return () => clearInterval(interval);
+  }, [isSandbox, usdtAddr]);
+
+  // Handle trigger outage simulation
+  const simulateSentryAction = async (statusType) => {
+    addSentryLog("INFO", `Triggering simulated status: ${statusType}`);
+    try {
+      let endpoint = "/simulate-healthy";
+      if (statusType === "OUTAGE") endpoint = "/simulate-outage";
+      if (statusType === "DISPUTE") endpoint = "/simulate-dispute";
+
+      const res = await fetch(`${SENTRY_API_URL}${endpoint}`, { method: 'POST' });
+      const data = await res.json();
+      setSentryStatus(data.providerStatus);
+
+      // If in sandbox mode, auto-pause or trigger simulation directly
+      if (isSandbox && statusType !== "HEALTHY") {
+        setStreams(prev => prev.map(s => {
+          if (s.id === activeStreamId && !s.isPaused) {
+            addSentryLog("ACTION", `[Sandbox Sentry] Automatically paused stream ${s.id} due to ${statusType}.`);
+            return {
+              ...s,
+              isPaused: true,
+              accruedAtLastUpdate: calculateAccrued(s),
+              lastUpdateTime: Date.now()
+            };
+          }
+          return s;
+        }));
+      }
+    } catch (err) {
+      // Local server down, handle sandbox trigger anyway
+      if (isSandbox && statusType !== "HEALTHY") {
+        setStreams(prev => prev.map(s => {
+          if (s.id === activeStreamId && !s.isPaused) {
+            addSentryLog("ACTION", `[Sandbox Sentry] Automatically paused stream ${s.id} due to ${statusType}.`);
+            return {
+              ...s,
+              isPaused: true,
+              accruedAtLastUpdate: calculateAccrued(s),
+              lastUpdateTime: Date.now()
+            };
+          }
+          return s;
+        }));
+      } else {
+        alert("Sentry Node Server not running. Launch it using `npm start` in the sentry folder to test live API controls.");
+      }
+    }
+  };
+
+  // Create stream implementation
+  const handleCreateStream = async (e) => {
+    e.preventDefault();
+    const depVal = parseFloat(newStream.deposit);
+    const rateVal = parseFloat(newStream.rate);
+
+    if (isNaN(depVal) || isNaN(rateVal) || depVal <= 0 || rateVal <= 0) {
+      alert("Invalid deposit or stream rate");
+      return;
+    }
+
+    if (isSandbox) {
+      const newId = streams.length + 1;
+      const duration = (depVal / rateVal) * 1000; // in ms
+      const streamObj = {
+        id: newId,
+        sender: account || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        receiver: newStream.receiver,
+        tokenName: "USDT",
+        deposit: depVal,
+        ratePerSecond: rateVal,
+        startTime: Date.now(),
+        stopTime: Date.now() + duration,
+        withdrawn: 0,
+        isPaused: false,
+        isActive: true,
+        sentryNode: newStream.sentry,
+        accruedAtLastUpdate: 0,
+        lastUpdateTime: Date.now()
+      };
+      
+      setStreams([...streams, streamObj]);
+      setActiveStreamId(newId);
+      setUsdtBalance(prev => (parseFloat(prev) - depVal).toFixed(2));
+      addSentryLog("INFO", `Stream ${newId} created to ${newStream.receiver}. Sentry node assigned: ${newStream.sentry}`);
+
+      // Try to register with Sentry Node
+      try {
+        await fetch(`${SENTRY_API_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ streamId: newId })
+        });
+      } catch (err) {}
+    } else {
+      // Live Web3
+      if (!provider) return;
+      try {
+        setLoading(true);
+        const signer = await provider.getSigner();
+        const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+        const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
+        
+        // Approve
+        const amountWei = ethers.parseUnits(newStream.deposit, 6);
+        addSentryLog("INFO", "Approving USDT for streaming...");
+        const appTx = await tokenContract.approve(streamerAddr, amountWei);
+        await appTx.wait();
+        addSentryLog("INFO", "Approval confirmed. Creating stream...");
+
+        const rateWei = ethers.parseUnits(newStream.rate, 6);
+        const tx = await streamerContract.createStream(
+          newStream.receiver,
+          usdtAddr,
+          amountWei,
+          rateWei,
+          newStream.sentry
+        );
+        addSentryLog("INFO", `Stream transaction sent: ${tx.hash}`);
+        const receipt = await tx.wait();
+        addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
+        
+        // Reload balances & streams
+        await updateBalances(account, provider);
+      } catch (error) {
+        console.error(error);
+        addSentryLog("ERROR", `Failed to create stream: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Perform Swap simulation / Web3 implementation
+  const handleSwap = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(swapAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    if (isSandbox) {
+      setLoading(true);
+      setTimeout(() => {
+        if (swapFrom === "BOT") {
+          if (parseFloat(botBalance) < amount) {
+            alert("Insufficient BOT balance");
+            setLoading(false);
+            return;
+          }
+          setBotBalance(prev => (parseFloat(prev) - amount).toFixed(4));
+          setUsdtBalance(prev => (parseFloat(prev) + amount * 2).toFixed(2));
+          addSentryLog("ACTION", `[BDEX Sandbox] Swapped ${amount} BOT for ${amount * 2} USDT`);
+        } else {
+          if (parseFloat(usdtBalance) < amount) {
+            alert("Insufficient USDT balance");
+            setLoading(false);
+            return;
+          }
+          setUsdtBalance(prev => (parseFloat(prev) - amount).toFixed(2));
+          setBotBalance(prev => (parseFloat(prev) + amount / 2).toFixed(4));
+          addSentryLog("ACTION", `[BDEX Sandbox] Swapped ${amount} USDT for ${amount / 2} BOT`);
+        }
+        setSwapAmount("");
+        setSwapEstimated("");
+        setLoading(false);
+      }, 500);
+    } else {
+      if (!provider) return;
+      try {
+        setLoading(true);
+        const signer = await provider.getSigner();
+        const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, signer);
+
+        if (swapFrom === "BOT") {
+          addSentryLog("INFO", `Swapping ${amount} BOT to USDT...`);
+          const tx = await bdexContract.swapBOTForUSDT({ value: ethers.parseEther(swapAmount) });
+          await tx.wait();
+          addSentryLog("INFO", "BOT to USDT Swap completed successfully.");
+        } else {
+          addSentryLog("INFO", `Swapping ${amount} USDT to BOT...`);
+          const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
+          const usdtWei = ethers.parseUnits(swapAmount, 6);
+          
+          // Approve BDEX
+          addSentryLog("INFO", "Approving USDT for swap...");
+          const appTx = await tokenContract.approve(bdexAddr, usdtWei);
+          await appTx.wait();
+          
+          const tx = await bdexContract.swapUSDTForBOT(usdtWei);
+          await tx.wait();
+          addSentryLog("INFO", "USDT to BOT Swap completed successfully.");
+        }
+        setSwapAmount("");
+        setSwapEstimated("");
+        await updateBalances(account, provider);
+      } catch (error) {
+        console.error(error);
+        addSentryLog("ERROR", `Swap failed: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Accrual math helper
+  const calculateAccrued = (stream) => {
+    if (!stream.isActive) return 0;
+    
+    let totalAccrued = stream.accruedAtLastUpdate;
+    if (!stream.isPaused) {
+      const current = Date.now();
+      const end = Math.min(current, stream.stopTime);
+      const start = stream.lastUpdateTime;
+      if (end > start) {
+        const timePassedSec = (end - start) / 1000;
+        totalAccrued += timePassedSec * stream.ratePerSecond;
+      }
+    }
+    return Math.min(totalAccrued, stream.deposit);
+  };
+
+  // Pause / Resume Sandbox Streams
+  const toggleStreamPause = (id) => {
+    setStreams(prev => prev.map(s => {
+      if (s.id === id) {
+        const wasPaused = s.isPaused;
+        const currentAccrued = calculateAccrued(s);
+        
+        addSentryLog("INFO", `Stream ${id} manually ${wasPaused ? 'resumed' : 'paused'}.`);
+        
+        if (wasPaused) {
+          // Resuming: stopTime gets pushed forward based on remaining deposit
+          const unaccrued = s.deposit - currentAccrued;
+          const remainingMs = (unaccrued / s.ratePerSecond) * 1000;
+          return {
+            ...s,
+            isPaused: false,
+            accruedAtLastUpdate: currentAccrued,
+            lastUpdateTime: Date.now(),
+            stopTime: Date.now() + remainingMs
+          };
+        } else {
+          // Pausing
+          return {
+            ...s,
+            isPaused: true,
+            accruedAtLastUpdate: currentAccrued,
+            lastUpdateTime: Date.now()
+          };
+        }
+      }
+      return s;
+    }));
+  };
+
+  // Withdraw sandbox stream tokens
+  const handleSandboxWithdraw = (id) => {
+    setStreams(prev => prev.map(s => {
+      if (s.id === id) {
+        const currentAccrued = calculateAccrued(s);
+        const claimable = currentAccrued - s.withdrawn;
+        if (claimable <= 0.01) {
+          alert("Nothing accrued to withdraw yet");
+          return s;
+        }
+
+        setUsdtBalance(prevBal => (parseFloat(prevBal) + claimable).toFixed(2));
+        addSentryLog("ACTION", `Withdrawn ${claimable.toFixed(4)} USDT from Stream ${id}`);
+
+        return {
+          ...s,
+          withdrawn: s.withdrawn + claimable,
+          accruedAtLastUpdate: currentAccrued,
+          lastUpdateTime: Date.now()
+        };
+      }
+      return s;
+    }));
+  };
+
+  // Cancel Stream
+  const handleCancelStream = (id) => {
+    if (isSandbox) {
+      setStreams(prev => prev.map(s => {
+        if (s.id === id) {
+          const currentAccrued = calculateAccrued(s);
+          const claimable = currentAccrued - s.withdrawn;
+          const refund = s.deposit - currentAccrued;
+          
+          setUsdtBalance(prevBal => (parseFloat(prevBal) + claimable + refund).toFixed(2));
+          addSentryLog("ACTION", `Stream ${id} cancelled. ${claimable.toFixed(4)} USDT withdrawn to Receiver, ${refund.toFixed(4)} USDT refunded to Sender.`);
+          return {
+            ...s,
+            isActive: false,
+            isPaused: false
+          };
+        }
+        return s;
+      }));
+    }
+  };
+
+  // Real-time animation logic
+  useEffect(() => {
+    const activeStr = streams.find(s => s.id === activeStreamId);
+    if (!activeStr || !activeStr.isActive) {
+      setTickerAccrued(0);
+      setTickerClaimable(0);
+      return;
+    }
+
+    const tick = () => {
+      const totalAccrued = calculateAccrued(activeStr);
+      const claimable = totalAccrued - activeStr.withdrawn;
+      setTickerAccrued(totalAccrued);
+      setTickerClaimable(claimable);
+      
+      tickerIntervalRef.current = requestAnimationFrame(tick);
+    };
+
+    tickerIntervalRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(tickerIntervalRef.current);
+  }, [activeStreamId, streams]);
+
+  // Handle swap conversion estimation
+  const handleSwapAmountChange = (val) => {
+    setSwapAmount(val);
+    const numeric = parseFloat(val);
+    if (isNaN(numeric) || numeric <= 0) {
+      setSwapEstimated("");
+      return;
+    }
+    if (swapFrom === "BOT") {
+      setSwapEstimated((numeric * 2).toFixed(2));
+    } else {
+      setSwapEstimated((numeric / 2).toFixed(4));
+    }
+  };
+
+  const currentActiveStream = streams.find(s => s.id === activeStreamId);
+
+  return (
+    <div className="container">
+      <header>
+        <div className="brand">
+          <span className="brand-logo">🌊</span>
+          <div>
+            <h1 className="brand-name">BotFlow</h1>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)' }}>AI-SHIELDED PAYFI HUB</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="network-badge">
+            <span className="network-dot"></span>
+            {network}
+          </div>
+          {isSandbox ? (
+            <button className="btn btn-connect" onClick={connectWallet} disabled={loading}>
+              <Zap size={16} />
+              Connect BOT Wallet
+            </button>
+          ) : (
+            <button className="btn btn-secondary" onClick={resetToSandbox}>
+              Disconnect
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Main Dashboard Section */}
+      <div className="grid-layout">
+        
+        {/* Left Side: Realtime Ticker & Stream List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Active Ticking Counter */}
+          <div className="glass-card">
+            <div className="live-counter-container">
+              <span className="live-counter-label">Active Flow Accumulation</span>
+              <div className="live-ticker">
+                {tickerAccrued.toFixed(6)}
+                <span className="live-ticker-symbol">USDT</span>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Claimable Balance</span>
+                <p style={{ fontSize: '1.5rem', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
+                  {tickerClaimable.toFixed(4)} USDT
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+                {currentActiveStream && currentActiveStream.isActive && (
+                  <>
+                    <button 
+                      className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
+                      onClick={() => toggleStreamPause(currentActiveStream.id)}
+                    >
+                      {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
+                      {currentActiveStream.isPaused ? "Resume" : "Pause"}
+                    </button>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => handleSandboxWithdraw(currentActiveStream.id)}
+                      disabled={tickerClaimable <= 0.01}
+                    >
+                      <RotateCcw size={16} />
+                      Withdraw
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {currentActiveStream && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Sender</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{currentActiveStream.sender}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Receiver (AI Agent/Provider)</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{currentActiveStream.receiver}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Flow Rate</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--accent-cyan)' }}>{currentActiveStream.ratePerSecond} USDT/sec</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Initial Locked Deposit</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.deposit} USDT</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Active Streams Panel */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Coins size={20} className="text-cyan" />
+              Your Payment Streams
+            </h3>
+            
+            <div className="stream-list">
+              {streams.map(stream => (
+                <div 
+                  key={stream.id} 
+                  className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
+                  onClick={() => stream.isActive && setActiveStreamId(stream.id)}
+                  style={{ cursor: stream.isActive ? 'pointer' : 'default' }}
+                >
+                  <div className="stream-info">
+                    <span className="stream-party">Stream #{stream.id} to AI Agent</span>
+                    <span className="stream-meta">
+                      <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
+                      <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
+                    </span>
+                    {!stream.isActive && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold' }}>CANCELLED / DEPLETED</span>}
+                  </div>
+                  
+                  <div className="stream-action-group" onClick={e => e.stopPropagation()}>
+                    {stream.isActive && (
+                      <>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          onClick={() => toggleStreamPause(stream.id)}
+                        >
+                          {stream.isPaused ? "Resume" : "Pause"}
+                        </button>
+                        <button 
+                          className="btn btn-danger" 
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          onClick={() => handleCancelStream(stream.id)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Create Stream Panel */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Activity size={20} className="text-cyan" />
+              Initialize New Stream
+            </h3>
+            
+            <form onSubmit={handleCreateStream}>
+              <div className="form-group">
+                <label className="form-label">Receiver (AI Service Provider Address)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={newStream.receiver}
+                  onChange={e => setNewStream({...newStream, receiver: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Initial Deposit ($USDT)</label>
+                  <div className="input-container">
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={newStream.deposit}
+                      onChange={e => setNewStream({...newStream, deposit: e.target.value})}
+                      required
+                    />
+                    <span className="input-suffix">USDT</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Flow Rate ($USDT/Sec)</label>
+                  <div className="input-container">
+                    <input 
+                      type="number" 
+                      step="0.001"
+                      className="input-field" 
+                      value={newStream.rate}
+                      onChange={e => setNewStream({...newStream, rate: e.target.value})}
+                      required
+                    />
+                    <span className="input-suffix">/ SEC</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Authorized Sentry Node (AI Sentry)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={newStream.sentry}
+                  onChange={e => setNewStream({...newStream, sentry: e.target.value})}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
+                <Zap size={16} />
+                Open Stream
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        {/* Right Side: BDEX Swap widget & Sentry Monitor Logs */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Wallet Balances Card */}
+          <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(13, 17, 30, 0.8) 0%, rgba(20, 10, 45, 0.4) 100%)' }}>
+            <h3 style={{ marginBottom: '1.25rem' }}>Your Ledger Wallet</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'block', fontFamily: 'var(--font-family-mono)' }}>NATIVE BOT</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>{botBalance}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)', display: 'block' }}>Gas Asset</span>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'block', fontFamily: 'var(--font-family-mono)' }}>USDT TOKEN</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>{usdtBalance}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent-pink)', display: 'block' }}>Stream Asset</span>
+              </div>
+            </div>
+          </div>
+
+          {/* BDEX Swap Portal */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ArrowDownUp size={20} className="text-cyan" />
+              BDEX Swap Portal
+            </h3>
+            
+            <form onSubmit={handleSwap}>
+              <div className="swap-container">
+                <div className="swap-input-block">
+                  <div className="swap-meta-info">
+                    <span>Pay</span>
+                    <span>Balance: {swapFrom === "BOT" ? botBalance : usdtBalance}</span>
+                  </div>
+                  <div className="swap-input-row">
+                    <input 
+                      type="number" 
+                      step="0.0001"
+                      className="swap-input" 
+                      placeholder="0.0" 
+                      value={swapAmount}
+                      onChange={e => handleSwapAmountChange(e.target.value)}
+                      required
+                    />
+                    <span className="swap-token-select">{swapFrom}</span>
+                  </div>
+                </div>
+
+                <div className="swap-divider">
+                  <div className="swap-arrow" onClick={() => setSwapFrom(prev => prev === "BOT" ? "USDT" : "BOT")}>
+                    <ArrowDownUp size={16} />
+                  </div>
+                </div>
+
+                <div className="swap-input-block">
+                  <div className="swap-meta-info">
+                    <span>Receive (Estimated)</span>
+                    <span>Balance: {swapFrom === "BOT" ? usdtBalance : botBalance}</span>
+                  </div>
+                  <div className="swap-input-row">
+                    <input 
+                      type="text" 
+                      className="swap-input" 
+                      placeholder="0.0" 
+                      value={swapEstimated} 
+                      readOnly 
+                    />
+                    <span className="swap-token-select">{swapFrom === "BOT" ? "USDT" : "BOT"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '1rem 0 0.5rem 0', textAlign: 'center', fontFamily: 'var(--font-family-mono)' }}>
+                Rate: 1 BOT = 2 USDT
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading || !swapAmount}>
+                Swap Assets
+              </button>
+            </form>
+          </div>
+
+          {/* AI Sentry Node Status Panel */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ShieldCheck size={20} style={{ color: 'var(--state-success)' }} />
+              AI Sentry Node Console
+            </h3>
+
+            <div className="sentry-panel">
+              <div className="sentry-status-header">
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Sentry Monitor Address</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{sentryAddress}</span>
+                </div>
+                <div className={`sentry-health-tag ${sentryStatus.toLowerCase()}`}>
+                  <span className="network-dot" style={{ backgroundColor: sentryStatus === "HEALTHY" ? 'var(--state-success)' : sentryStatus === "OUTAGE" ? 'var(--state-error)' : 'var(--state-warning)' }}></span>
+                  {sentryStatus}
+                </div>
+              </div>
+
+              {/* Simulation triggers */}
+              <div>
+                <span className="form-label" style={{ marginBottom: '0.5rem' }}>Simulate Network Provider Events</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-success" 
+                    style={{ fontSize: '0.75rem', padding: '0.5rem' }}
+                    onClick={() => simulateSentryAction("HEALTHY")}
+                  >
+                    Restore Healthy
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    style={{ fontSize: '0.75rem', padding: '0.5rem' }}
+                    onClick={() => simulateSentryAction("OUTAGE")}
+                  >
+                    Outage (Auto Pause)
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ fontSize: '0.75rem', padding: '0.5rem', color: 'var(--state-warning)', borderColor: 'var(--state-warning)' }}
+                    onClick={() => simulateSentryAction("DISPUTE")}
+                  >
+                    User Dispute
+                  </button>
+                </div>
+              </div>
+
+              {/* Sentry Logs View */}
+              <div>
+                <span className="form-label">Sentry Activity Feed</span>
+                <div className="sentry-logs-view">
+                  {sentryLogs.map((log, idx) => (
+                    <div key={idx} className={`log-line ${log.type.toLowerCase()}`}>
+                      [{log.timestamp.split('T')[1].split('.')[0]}] [{log.type}] {log.message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+export default App;

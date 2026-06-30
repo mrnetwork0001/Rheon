@@ -1,0 +1,23 @@
+{
+  "name": "botflow-workspace",
+  "version": "1.0.0",
+  "description": "BotFlow: AI-Shielded Micropayment and Subscription Streaming Protocol on BOT Chain",
+  "scripts": {
+    "bootstrap": "npm install && npm install --prefix contracts && npm install --prefix sentry && npm install --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "start:sentry": "npm run start --prefix sentry",
+    "compile": "npm run compile --prefix contracts",
+    "test:contracts": "npm run test --prefix contracts"
+  },
+  "keywords": [
+    "payfi",
+    "streaming",
+    "payments",
+    "ai",
+    "botchain",
+    "evm",
+    "sentry"
+  ],
+  "author": "",
+  "license": "MIT"
+}
