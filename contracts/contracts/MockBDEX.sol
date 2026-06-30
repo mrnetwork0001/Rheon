@@ -15,7 +15,7 @@ contract MockBDEX is ReentrancyGuard {
     event SwapUSDTForBOT(address indexed user, uint256 usdtAmount, uint256 botAmount);
 
     constructor(address _usdtToken) payable {
-        usdtToken = _usdtToken;
+        usdtToken = IERC20(_usdtToken);
     }
 
     // Allow the contract to receive native BOT tokens
