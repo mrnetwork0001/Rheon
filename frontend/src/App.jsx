@@ -63,6 +63,7 @@ const INITIAL_SANDBOX_STREAMS = [
 ];
 
 function App() {
+  const [view, setView] = useState("landing");
   // Web3 state
   const [account, setAccount] = useState("");
   const [network, setNetwork] = useState("Sandbox Mode");
@@ -542,10 +543,162 @@ function App() {
 
   const currentActiveStream = streams.find(s => s.id === activeStreamId);
 
+  if (view === "landing") {
+    return (
+      <div className="container">
+        {/* Navigation Bar */}
+        <nav className="landing-navbar">
+          <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer' }}>
+            <span className="brand-logo">🌊</span>
+            <div>
+              <h2 className="brand-name" style={{ fontSize: '1.5rem' }}>BotFlow</h2>
+              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', display: 'block' }}>AI-SHIELDED PAYFI</span>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={() => setView("app")}>
+            Launch App
+            <Zap size={16} />
+          </button>
+        </nav>
+
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="hero-glow"></div>
+          <h1 className="hero-title">The Real-Time PayFi Protocol for AI Agents</h1>
+          <p className="hero-subtitle">
+            Stream micro-payments to AI agents, games, and DePIN nodes with sub-second finality. 
+            Protected by automated Sentry Nodes that auto-pause flows during service outages or disputes.
+          </p>
+          <div className="hero-buttons">
+            <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
+              Launch Console
+              <Zap size={18} />
+            </button>
+            <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg">
+              Explore Codebase
+            </a>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="stats-grid">
+            <div className="stat-item">
+              <span className="stat-val">~0.75s</span>
+              <span className="stat-lbl">Block Speed</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-val">&lt; $0.0001</span>
+              <span className="stat-lbl">Avg Gas Fee</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-val">100%</span>
+              <span className="stat-lbl">Sentry Shielded</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="features-section">
+          <div className="section-header">
+            <h2 className="section-title">Engineered for real-time value transfer</h2>
+            <p className="section-subtitle">
+              Leveraging BOT Chain's high-speed L1 capabilities, BotFlow establishes trustless streaming channels.
+            </p>
+          </div>
+
+          <div className="feature-cards-grid">
+            <div className="glass-card feature-card">
+              <div className="feature-icon-wrapper">
+                <Zap size={24} />
+              </div>
+              <h3 className="feature-title">Real-Time Streaming</h3>
+              <p className="feature-desc">
+                Stream assets continuously to endpoints with sub-second pro-rata updates. Claim funds instantly whenever you need them.
+              </p>
+            </div>
+
+            <div className="glass-card feature-card">
+              <div className="feature-icon-wrapper">
+                <ShieldCheck size={24} />
+              </div>
+              <h3 className="feature-title">AI Sentry Guards</h3>
+              <p className="feature-desc">
+                Autonomous oracle agents monitor provider performance and automatically execute emergency pause signals on-chain during disputes.
+              </p>
+            </div>
+
+            <div className="glass-card feature-card">
+              <div className="feature-icon-wrapper">
+                <ArrowDownUp size={24} />
+              </div>
+              <h3 className="feature-title">BDEX Swap Portal</h3>
+              <p className="feature-desc">
+                Swap between native gas $BOT tokens and $USDT streams in a single transaction with instant confirmation.
+              </p>
+            </div>
+
+            <div className="glass-card feature-card">
+              <div className="feature-icon-wrapper">
+                <Coins size={24} />
+              </div>
+              <h3 className="feature-title">AI Agent Micropayments</h3>
+              <p className="feature-desc">
+                Perfect for PayFi loops: pay for LLM inferences, API compute, and content streaming only for the exact amount consumed.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="workflow-section">
+          <div className="section-header">
+            <h2 className="section-title">How BotFlow Works</h2>
+            <p className="section-subtitle">A secure PayFi channel in three simple steps.</p>
+          </div>
+
+          <div className="workflow-grid">
+            <div className="workflow-step">
+              <div className="workflow-number">01</div>
+              <h3 className="workflow-step-title">Initialize Stream</h3>
+              <p className="workflow-step-desc">Deposit USDT, set your per-second flow rate, and designate an AI Sentry monitor address.</p>
+            </div>
+
+            <div className="workflow-step">
+              <div className="workflow-number">02</div>
+              <h3 className="workflow-step-title">Sentry Node Monitoring</h3>
+              <p className="workflow-step-desc">The AI Sentry node continuously health-checks the recipient and protects your tokens.</p>
+            </div>
+
+            <div className="workflow-step">
+              <div className="workflow-number">03</div>
+              <h3 className="workflow-step-title">Claim & Settle</h3>
+              <p className="workflow-step-desc">The receiver withdraws accrued funds. Sentry triggers auto-pauses if service outages are detected.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Banner */}
+        <div className="cta-banner">
+          <div className="cta-content">
+            <h2 className="cta-title">Ready to launch your streaming channel?</h2>
+            <p className="cta-desc">Experience real-time sub-second on-chain transactions today on BOT Chain.</p>
+            <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
+              Launch Console
+              <Zap size={18} />
+            </button>
+          </div>
+        </div>
+
+        <footer>
+          <p>© 2026 BotFlow. Built for the BOT Chain Builder Challenge #1.</p>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <header>
-        <div className="brand">
+        <div className="brand" onClick={() => setView("landing")} style={{ cursor: "pointer" }}>
           <span className="brand-logo">🌊</span>
           <div>
             <h1 className="brand-name">BotFlow</h1>
