@@ -91,7 +91,7 @@ function App() {
   // Refs
   const tickerIntervalRef = useRef(null);
 
-  // Connect MetaMask
+  // Connect MetaMask and enforce BOT Chain Testnet
   const connectWallet = async () => {
     if (!window.ethereum) {
       alert("MetaMask is not installed. Please install it to use BotFlow.");
@@ -100,6 +100,33 @@ function App() {
     try {
       setLoading(true);
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
+      const chainIdHex = '0x3c8'; // 968 in hex for BOT testnet
+      
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: chainIdHex }],
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: chainIdHex,
+                chainName: 'BOT Chain Testnet',
+                nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
+                rpcUrls: ['https://rpc.bohr.life'],
+                blockExplorerUrls: ['https://scan.bohr.life/']
+              }],
+            });
+          } catch (addError) {
+            console.error(addError);
+          }
+        }
+      }
+
       const web3Provider = new ethers.BrowserProvider(window.ethereum);
       const net = await web3Provider.getNetwork();
       
