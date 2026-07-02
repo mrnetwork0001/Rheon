@@ -691,7 +691,7 @@ function App() {
             <span className="network-dot"></span>
             {network}
           </div>
-          {isSandbox ? (
+          {!account ? (
             <button className="btn btn-connect" onClick={connectWallet} disabled={loading}>
               <Zap size={16} />
               Connect BOT Wallet
