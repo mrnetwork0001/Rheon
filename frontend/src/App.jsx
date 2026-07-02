@@ -42,33 +42,13 @@ const BDEX_ABI = [
   "function rate() view returns (uint256)"
 ];
 
-// Initial Sandbox Mock Streams
-const INITIAL_SANDBOX_STREAMS = [
-  {
-    id: 1,
-    sender: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    tokenName: "USDT",
-    deposit: 500,
-    ratePerSecond: 0.05, // 0.05 USDT per sec
-    startTime: Date.now() - 3600 * 1000, // 1 hour ago
-    stopTime: Date.now() + 3600 * 1000 * 9, // 9 hours left
-    withdrawn: 30,
-    isPaused: false,
-    isActive: true,
-    sentryNode: "0x15d34AAf54f6577393b74d6A22e18517860D268A",
-    accruedAtLastUpdate: 180,
-    lastUpdateTime: Date.now() - 3600 * 1000
-  }
-];
-
 function App() {
   const [view, setView] = useState("landing");
   // Web3 state
   const [account, setAccount] = useState("");
-  const [network, setNetwork] = useState("Sandbox Mode");
+  const [network, setNetwork] = useState("Not Connected");
   const [provider, setProvider] = useState(null);
-  const [isSandbox, setIsSandbox] = useState(true);
+  const [isSandbox, setIsSandbox] = useState(false);
   
   // Contracts address state
   const [streamerAddr, setStreamerAddr] = useState(import.meta.env.VITE_STREAMER_CONTRACT_ADDRESS || "");
@@ -80,8 +60,8 @@ function App() {
   const [usdtBalance, setUsdtBalance] = useState("0.0");
 
   // Streams state
-  const [streams, setStreams] = useState(INITIAL_SANDBOX_STREAMS);
-  const [activeStreamId, setActiveStreamId] = useState(1);
+  const [streams, setStreams] = useState([]);
+  const [activeStreamId, setActiveStreamId] = useState(null);
   const [newStream, setNewStream] = useState({
     receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
     deposit: "100",
@@ -114,7 +94,7 @@ function App() {
   // Connect MetaMask
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert("MetaMask is not installed. Running in Sandbox Mode.");
+      alert("MetaMask is not installed. Please install it to use BotFlow.");
       return;
     }
     try {
@@ -139,17 +119,17 @@ function App() {
     }
   };
 
-  // Disconnect / Reset back to Sandbox
-  const resetToSandbox = () => {
+  // Disconnect Wallet
+  const disconnectWallet = () => {
     setAccount("");
-    setNetwork("Sandbox Mode");
+    setNetwork("Not Connected");
     setProvider(null);
-    setIsSandbox(true);
-    setBotBalance("100.0");
-    setUsdtBalance("5000.0");
-    setStreams(INITIAL_SANDBOX_STREAMS);
-    setActiveStreamId(1);
-    addSentryLog("INFO", "Reset to Sandbox Environment.");
+    setIsSandbox(false);
+    setBotBalance("0.0");
+    setUsdtBalance("0.0");
+    setStreams([]);
+    setActiveStreamId(null);
+    addSentryLog("INFO", "Wallet disconnected.");
   };
 
   // Fetch balances
@@ -717,7 +697,7 @@ function App() {
               Connect BOT Wallet
             </button>
           ) : (
-            <button className="btn btn-secondary" onClick={resetToSandbox}>
+            <button className="btn btn-secondary" onClick={disconnectWallet}>
               Disconnect
             </button>
           )}
