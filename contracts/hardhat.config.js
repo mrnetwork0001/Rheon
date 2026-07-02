@@ -26,5 +26,10 @@ module.exports = {
       chainId: 677,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
+    botchainTestnet: {
+      url: "https://rpc.bohr.life",
+      chainId: 968,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
   },
 };
