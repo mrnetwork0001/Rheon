@@ -794,6 +794,7 @@ function App() {
                 <a href="#">BDEX Swap</a>
               </div>
             </div>
+          </div>
         </footer>
       </div>
     );
