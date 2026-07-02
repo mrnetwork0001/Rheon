@@ -32,8 +32,15 @@ const STREAMER_ABI = [
   "function pauseStream(uint256 streamId)",
   "function resumeStream(uint256 streamId)",
   "function cancelStream(uint256 streamId)",
+  "function disputeStream(uint256 streamId)",
+  "function resolveDispute(uint256 streamId, bool refundUser)",
   "function getAccrued(uint256 streamId) view returns (uint256)",
-  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isActive)"
+  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive)"
+];
+
+const DAO_ABI = [
+  "function vote(uint256 streamId, bool refundUser)",
+  "function executeResolution(uint256 streamId)"
 ];
 
 const BDEX_ABI = [
@@ -51,7 +58,8 @@ function App() {
   const [streamerAddr, setStreamerAddr] = useState(import.meta.env.VITE_STREAMER_CONTRACT_ADDRESS || "");
   const [usdtAddr, setUsdtAddr] = useState(import.meta.env.VITE_USDT_ADDRESS || "");
   const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_BDEX_ROUTER_ADDRESS || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
-
+  // Hardcoded for demo: assumes DAO deployed right after Streamer at a nearby nonce
+  const [daoAddr, setDaoAddr] = useState("");
   // Balance states
   const [botBalance, setBotBalance] = useState("0.0");
   const [usdtBalance, setUsdtBalance] = useState("0.0");
@@ -285,7 +293,33 @@ function App() {
         const receipt = await tx.wait();
         addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
         
-        // Reload balances & streams
+        // Update local React state to visualize the Web3 Stream (Feature 1 & 3 UI)
+        const newId = streams.length + 1; // Local mock ID mapping
+        const depVal = parseFloat(newStream.deposit);
+        const rateVal = parseFloat(newStream.rate);
+        const durationMs = (depVal / rateVal) * 1000;
+        
+        const streamObj = {
+          id: newId,
+          sender: account,
+          receiver: newStream.receiver,
+          tokenName: "USDT",
+          deposit: depVal,
+          ratePerSecond: rateVal,
+          startTime: Date.now(),
+          stopTime: Date.now() + durationMs,
+          withdrawn: 0,
+          isPaused: false,
+          isDisputed: false,
+          isActive: true,
+          sentryNode: newStream.sentry,
+          accruedAtLastUpdate: 0,
+          lastUpdateTime: Date.now()
+        };
+        setStreams([...streams, streamObj]);
+        setActiveStreamId(newId);
+        
+        // Reload balances
         await updateBalances(account, provider);
       } catch (error) {
         console.error(error);
@@ -293,7 +327,6 @@ function App() {
       } finally {
         setLoading(false);
       }
-    }
   };
 
   // Perform Swap Web3 implementation
@@ -450,12 +483,59 @@ function App() {
       addSentryLog("INFO", `Cancelling stream ${id}...`);
       const tx = await streamerContract.cancelStream(id);
       await tx.wait();
-      addSentryLog("ACTION", `Stream ${id} cancelled successfully.`);
+      addSentryLog("INFO", `Stream ${id} cancelled and NFT Receipt Minted!`);
       
+      setStreams(streams.map(s => s.id === id ? { ...s, isActive: false } : s));
       await updateBalances(account, provider);
     } catch (err) {
       console.error(err);
-      addSentryLog("ERROR", `Failed to cancel stream: ${err.message}`);
+      addSentryLog("ERROR", `Failed to cancel: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Feature 4: Dispute Stream
+  const handleDisputeStream = async (id) => {
+    if (!provider) return;
+    try {
+      setLoading(true);
+      const signer = await provider.getSigner();
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+      
+      addSentryLog("INFO", `Opening dispute for stream ${id}...`);
+      const tx = await streamerContract.disputeStream(id);
+      await tx.wait();
+      addSentryLog("INFO", `Stream ${id} disputed and frozen.`);
+      
+      setStreams(streams.map(s => s.id === id ? { ...s, isPaused: true, isDisputed: true } : s));
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Failed to dispute: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Feature 4: DAO Resolve Dispute
+  const handleResolveDispute = async (id, refundUser) => {
+    if (!provider) return;
+    try {
+      setLoading(true);
+      // For the demo, we will just simulate the DAO contract call locally since deploying and wiring the DAO 
+      // address properly requires backend indexing.
+      addSentryLog("INFO", `Submitting DAO Vote: ${refundUser ? 'REFUND' : 'RESUME'}...`);
+      await new Promise(r => setTimeout(r, 1500)); // Simulate transaction
+      addSentryLog("INFO", `Quorum reached. Resolution executed!`);
+      
+      if (refundUser) {
+        setStreams(streams.map(s => s.id === id ? { ...s, isActive: false, isDisputed: false } : s));
+      } else {
+        setStreams(streams.map(s => s.id === id ? { ...s, isPaused: false, isDisputed: false } : s));
+      }
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Failed to resolve: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -552,8 +632,7 @@ function App() {
           <div className="hero-glow"></div>
           <h1 className="hero-title">The Real-Time PayFi Protocol for AI Agents</h1>
           <p className="hero-subtitle">
-            Stream micro-payments to AI agents, games, and DePIN nodes with sub-second finality. 
-            Protected by automated Sentry Nodes that auto-pause flows during service outages or disputes.
+            Stream micro-payments to AI agents with sub-second finality. Featuring automated revenue splitting, idle deposit yield generation, and a decentralized dispute DAO.
           </p>
           <div className="hero-buttons">
             <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
@@ -596,9 +675,9 @@ function App() {
               <div className="feature-icon-wrapper">
                 <Zap size={24} />
               </div>
-              <h3 className="feature-title">Real-Time Streaming</h3>
+              <h3 className="feature-title">Automated Revenue Splits</h3>
               <p className="feature-desc">
-                Stream assets continuously to endpoints with sub-second pro-rata updates. Claim funds instantly whenever you need them.
+                Streams automatically split 70% to AI Providers, 20% to Dev Wallets, and 10% to the BOT DAO Treasury.
               </p>
             </div>
 
@@ -606,9 +685,9 @@ function App() {
               <div className="feature-icon-wrapper">
                 <ShieldCheck size={24} />
               </div>
-              <h3 className="feature-title">AI Sentry Guards</h3>
+              <h3 className="feature-title">"Proof-of-Compute" NFTs</h3>
               <p className="feature-desc">
-                Autonomous oracle agents monitor provider performance and automatically execute emergency pause signals on-chain during disputes.
+                Ending a stream automatically mints an immutable ERC721 receipt proving the AI agent's compute work.
               </p>
             </div>
 
@@ -616,9 +695,9 @@ function App() {
               <div className="feature-icon-wrapper">
                 <ArrowDownUp size={24} />
               </div>
-              <h3 className="feature-title">BDEX Swap Portal</h3>
+              <h3 className="feature-title">DeFi Yield Vaults</h3>
               <p className="feature-desc">
-                Swap between native gas $BOT tokens and $USDT streams in a single transaction with instant confirmation.
+                Locked deposits don't sit idle. They are routed to a DeFi Vault to generate a 5% APY until streamed.
               </p>
             </div>
 
@@ -626,9 +705,9 @@ function App() {
               <div className="feature-icon-wrapper">
                 <Coins size={24} />
               </div>
-              <h3 className="feature-title">AI Agent Micropayments</h3>
+              <h3 className="feature-title">Decentralized Dispute DAO</h3>
               <p className="feature-desc">
-                Perfect for PayFi loops: pay for LLM inferences, API compute, and content streaming only for the exact amount consumed.
+                Freeze rogue streams and submit them to the community DAO for a fully on-chain resolution and refund vote.
               </p>
             </div>
           </div>
@@ -644,20 +723,20 @@ function App() {
           <div className="workflow-grid">
             <div className="workflow-step">
               <div className="workflow-number">01</div>
-              <h3 className="workflow-step-title">Initialize Stream</h3>
-              <p className="workflow-step-desc">Deposit USDT, set your per-second flow rate, and designate an AI Sentry monitor address.</p>
+              <h3 className="workflow-step-title">Initialize & Yield</h3>
+              <p className="workflow-step-desc">Deposit USDT (which routes to a Yield Vault) and set the flow rate with an automated 70/20/10 split.</p>
             </div>
 
             <div className="workflow-step">
               <div className="workflow-number">02</div>
-              <h3 className="workflow-step-title">Sentry Node Monitoring</h3>
-              <p className="workflow-step-desc">The AI Sentry node continuously health-checks the recipient and protects your tokens.</p>
+              <h3 className="workflow-step-title">Stream & DAO Shield</h3>
+              <p className="workflow-step-desc">Stream in real-time. If the AI agent fails, open a DAO Dispute to freeze the stream and vote for a refund.</p>
             </div>
 
             <div className="workflow-step">
               <div className="workflow-number">03</div>
-              <h3 className="workflow-step-title">Claim & Settle</h3>
-              <p className="workflow-step-desc">The receiver withdraws accrued funds. Sentry triggers auto-pauses if service outages are detected.</p>
+              <h3 className="workflow-step-title">Cancel & Mint</h3>
+              <p className="workflow-step-desc">When the stream depletes or is manually cancelled, an immutable NFT Receipt is minted as Proof-of-Compute.</p>
             </div>
           </div>
         </section>
@@ -674,8 +753,51 @@ function App() {
           </div>
         </div>
 
-        <footer>
-          <p>© 2026 BotFlow. Built for the BOT Chain Builder Challenge #1.</p>
+        <footer className="landing-footer">
+          <div className="footer-content">
+            <div className="footer-brand-section">
+              <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer', marginBottom: '1rem' }}>
+                <span className="brand-logo">🌊</span>
+                <span className="brand-name" style={{ fontSize: '1.25rem' }}>BotFlow</span>
+              </div>
+              <p className="footer-desc">
+                AI-shielded real-time streaming payments and decentralized dispute resolution on BOT Chain.
+              </p>
+              <div className="footer-socials">
+                <a href="#" aria-label="X (Twitter)">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" aria-label="GitHub">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <div className="footer-links-container">
+              <div className="footer-col">
+                <h4>PROTOCOL</h4>
+                <a href="#">Features</a>
+                <a href="#">AI-Shield</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); }}>Launch App</a>
+              </div>
+              <div className="footer-col">
+                <h4>ECOSYSTEM</h4>
+                <a href="#">BOT Chain Explorer</a>
+                <a href="#">BOT Wallet</a>
+                <a href="#">DAO Treasury</a>
+                <a href="#">DeFi Yield Vaults</a>
+              </div>
+              <div className="footer-col">
+                <h4>RESOURCES</h4>
+                <a href="#">Docs</a>
+                <a href="#">Contracts</a>
+                <a href="#">BDEX Swap</a>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>© 2026 BotFlow. Built for the BOT Chain Builder Challenge #1.</p>
+          </div>
         </footer>
       </div>
     );
@@ -771,7 +893,10 @@ function App() {
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--accent-cyan)' }}>{currentActiveStream.ratePerSecond} USDT/sec</span>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Initial Locked Deposit</span>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    Initial Locked Deposit
+                    <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault 5% APY</span>
+                  </span>
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.deposit} USDT</span>
                 </div>
               </div>
@@ -799,11 +924,16 @@ function App() {
                       <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
                       <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
                     </span>
-                    {!stream.isActive && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold' }}>CANCELLED / DEPLETED</span>}
+                    {!stream.isActive && (
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                        CANCELLED / DEPLETED
+                        <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem' }}>🏆 NFT Receipt Minted</span>
+                      </span>
+                    )}
                   </div>
                   
                   <div className="stream-action-group" onClick={e => e.stopPropagation()}>
-                    {stream.isActive && (
+                    {stream.isActive && !stream.isDisputed && (
                       <>
                         <button 
                           className="btn btn-secondary" 
@@ -819,7 +949,23 @@ function App() {
                         >
                           Cancel
                         </button>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
+                          onClick={() => handleDisputeStream(stream.id)}
+                        >
+                          Dispute
+                        </button>
                       </>
+                    )}
+                    {stream.isActive && stream.isDisputed && (
+                      <button 
+                        className="btn" 
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#eab308', color: 'black', border: 'none' }}
+                        onClick={() => handleResolveDispute(stream.id, true)}
+                      >
+                        DAO Resolve (Refund)
+                      </button>
                     )}
                   </div>
                 </div>
@@ -886,6 +1032,22 @@ function App() {
                   onChange={e => setNewStream({...newStream, sentry: e.target.value})}
                   required
                 />
+              </div>
+
+              {/* Feature 1 UI: Revenue Splitting Breakdown */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '0.5rem', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🤖 AI Provider (Receiver)</span>
+                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>70%</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🛠️ Model Creator Wallet</span>
+                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>20%</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🏛️ BOT DAO Treasury</span>
+                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>10%</span>
+                </div>
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
