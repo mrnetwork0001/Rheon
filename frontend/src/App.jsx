@@ -109,7 +109,8 @@ function App() {
           params: [{ chainId: chainIdHex }],
         });
       } catch (switchError) {
-        if (switchError.code === 4902) {
+        // If the chain hasn't been added, try to add it.
+        if (switchError.code === 4902 || switchError.code === -32603) {
           try {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
@@ -123,21 +124,36 @@ function App() {
             });
           } catch (addError) {
             console.error(addError);
+            alert("Failed to add BOT Chain Testnet. Please add it manually.");
+            setLoading(false);
+            return;
           }
+        } else {
+          console.error(switchError);
+          alert("You must switch to the BOT Chain Testnet to use BotFlow.");
+          setLoading(false);
+          return;
         }
       }
 
+      // Ensure provider is refreshed after potential network switch
       const web3Provider = new ethers.BrowserProvider(window.ethereum);
       const net = await web3Provider.getNetwork();
+      
+      if (net.chainId !== 968n && net.chainId !== 968 && Number(net.chainId) !== 968) {
+        alert("Please switch your wallet to BOT Chain Testnet (Chain ID 968) to proceed.");
+        setLoading(false);
+        return;
+      }
       
       setAccount(accounts[0]);
       setProvider(web3Provider);
       setIsSandbox(false);
-      setNetwork(net.name === "unknown" ? `Chain ID: ${net.chainId}` : net.name);
+      setNetwork("BOT Chain Testnet");
       
       // Load balances
       await updateBalances(accounts[0], web3Provider);
-      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on network ${net.name}`);
+      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on BOT Chain Testnet`);
     } catch (error) {
       console.error(error);
       addSentryLog("ERROR", `Failed to connect wallet: ${error.message}`);
