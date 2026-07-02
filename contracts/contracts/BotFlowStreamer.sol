@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./BotFlowReceipt.sol";
 
 contract BotFlowStreamer is ReentrancyGuard {
     struct Stream {
@@ -25,6 +26,11 @@ contract BotFlowStreamer is ReentrancyGuard {
 
     uint256 public nextStreamId = 1;
     mapping(uint256 => Stream) public streams;
+    BotFlowReceipt public receiptNFT;
+
+    constructor() {
+        receiptNFT = new BotFlowReceipt(address(this));
+    }
 
     event StreamCreated(
         uint256 indexed streamId,
@@ -334,6 +340,10 @@ contract BotFlowStreamer is ReentrancyGuard {
         if (refund > 0) {
             IERC20(token).transfer(sender, refund);
         }
+
+        // Mint Proof-of-Compute NFT to sender
+        uint256 duration = stream.lastUpdateTime - stream.startTime;
+        receiptNFT.mintReceipt(sender, streamId, stream.withdrawnAmount + claimable, duration);
 
         emit StreamCancelled(streamId, claimable, refund);
     }
