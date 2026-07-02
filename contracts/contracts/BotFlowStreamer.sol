@@ -7,7 +7,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract BotFlowStreamer is ReentrancyGuard {
     struct Stream {
         address sender;
-        address receiver;
+        address[] receivers;
+        uint256[] sharePercentages;
         address token;
         uint256 deposit; // Total tokens ever deposited (initial + topups)
         uint256 ratePerSecond; // Flow rate in tokens per second
@@ -15,7 +16,7 @@ contract BotFlowStreamer is ReentrancyGuard {
         uint256 stopTime; // Timestamp when deposit runs out
         uint256 remainingBalance; // Balance currently locked in contract for this stream
         uint256 accruedUntilLastUpdate; // Total tokens accrued from start until last update
-        uint256 withdrawnAmount; // Total tokens withdrawn by receiver
+        uint256 withdrawnAmount; // Total tokens withdrawn by receivers
         uint256 lastUpdateTime;
         address sentryNode; // AI Sentry Node address that can monitor and pause/adjust this stream
         bool isPaused;
@@ -28,7 +29,8 @@ contract BotFlowStreamer is ReentrancyGuard {
     event StreamCreated(
         uint256 indexed streamId,
         address indexed sender,
-        address indexed receiver,
+        address[] receivers,
+        uint256[] sharePercentages,
         address token,
         uint256 deposit,
         uint256 ratePerSecond,
@@ -36,27 +38,35 @@ contract BotFlowStreamer is ReentrancyGuard {
         uint256 stopTime,
         address sentryNode
     );
-    event StreamWithdrawn(uint256 indexed streamId, address indexed receiver, uint256 amount);
+    event StreamWithdrawn(uint256 indexed streamId, address indexed by, uint256 amount);
     event StreamPaused(uint256 indexed streamId, address indexed by);
     event StreamResumed(uint256 indexed streamId, address indexed by, uint256 newStopTime);
     event StreamAdjusted(uint256 indexed streamId, address indexed by, uint256 oldRate, uint256 newRate, uint256 newStopTime);
     event StreamCancelled(uint256 indexed streamId, uint256 receiverAmount, uint256 senderAmount);
     event StreamToppedUp(uint256 indexed streamId, address indexed sender, uint256 amount, uint256 newStopTime);
 
+    function _isReceiver(uint256 streamId, address addr) internal view returns (bool) {
+        address[] memory recs = streams[streamId].receivers;
+        for(uint i = 0; i < recs.length; i++) {
+            if (recs[i] == addr) return true;
+        }
+        return false;
+    }
+
     modifier onlyStreamParty(uint256 streamId) {
-        Stream memory stream = streams[streamId];
+        Stream storage stream = streams[streamId];
         require(stream.isActive, "Stream is not active");
         require(
             msg.sender == stream.sender || 
-            msg.sender == stream.receiver || 
-            msg.sender == stream.sentryNode,
+            msg.sender == stream.sentryNode ||
+            _isReceiver(streamId, msg.sender),
             "Not authorized"
         );
         _;
     }
 
     modifier onlyStreamSenderOrSentry(uint256 streamId) {
-        Stream memory stream = streams[streamId];
+        Stream storage stream = streams[streamId];
         require(stream.isActive, "Stream is not active");
         require(
             msg.sender == stream.sender || 
@@ -67,25 +77,42 @@ contract BotFlowStreamer is ReentrancyGuard {
     }
 
     /**
+     * @notice Helper getter for the frontend since public mapping getters drop dynamic arrays.
+     */
+    function getStream(uint256 streamId) external view returns (Stream memory) {
+        return streams[streamId];
+    }
+
+    /**
      * @notice Creates a new payment stream.
-     * @param receiver The address receiving the tokens.
+     * @param receivers The addresses receiving the tokens.
+     * @param sharePercentages The percentage splits for each receiver (must sum to 100).
      * @param token The ERC20 token address.
      * @param deposit The amount of tokens to deposit.
      * @param ratePerSecond Flow rate of tokens per second.
      * @param sentryNode The AI Sentry Node address authorized to monitor/pause the stream.
      */
     function createStream(
-        address receiver,
+        address[] memory receivers,
+        uint256[] memory sharePercentages,
         address token,
         uint256 deposit,
         uint256 ratePerSecond,
         address sentryNode
     ) external nonReentrant returns (uint256) {
-        require(receiver != address(0), "Receiver cannot be zero address");
+        require(receivers.length > 0, "No receivers specified");
+        require(receivers.length == sharePercentages.length, "Array length mismatch");
         require(token != address(0), "Token cannot be zero address");
         require(deposit > 0, "Deposit must be greater than zero");
         require(ratePerSecond > 0, "Rate must be greater than zero");
         require(deposit >= ratePerSecond, "Deposit must be at least rate per second");
+
+        uint256 totalPercentage = 0;
+        for (uint i = 0; i < sharePercentages.length; i++) {
+            require(receivers[i] != address(0), "Receiver cannot be zero address");
+            totalPercentage += sharePercentages[i];
+        }
+        require(totalPercentage == 100, "Percentages must sum to 100");
 
         // Transfer tokens to contract
         IERC20(token).transferFrom(msg.sender, address(this), deposit);
@@ -96,7 +123,8 @@ contract BotFlowStreamer is ReentrancyGuard {
 
         streams[streamId] = Stream({
             sender: msg.sender,
-            receiver: receiver,
+            receivers: receivers,
+            sharePercentages: sharePercentages,
             token: token,
             deposit: deposit,
             ratePerSecond: ratePerSecond,
@@ -114,7 +142,8 @@ contract BotFlowStreamer is ReentrancyGuard {
         emit StreamCreated(
             streamId,
             msg.sender,
-            receiver,
+            receivers,
+            sharePercentages,
             token,
             deposit,
             ratePerSecond,
@@ -130,7 +159,7 @@ contract BotFlowStreamer is ReentrancyGuard {
      * @notice Returns the total accrued amount of tokens since the stream started.
      */
     function getAccrued(uint256 streamId) public view returns (uint256) {
-        Stream memory stream = streams[streamId];
+        Stream storage stream = streams[streamId];
         if (!stream.isActive) return 0;
 
         uint256 accrued = stream.accruedUntilLastUpdate;
@@ -178,25 +207,30 @@ contract BotFlowStreamer is ReentrancyGuard {
     }
 
     /**
-     * @notice Allows receiver to withdraw accrued tokens from the stream.
+     * @notice Allows receiver/sender to withdraw accrued tokens from the stream.
      */
     function withdrawFromStream(uint256 streamId, uint256 amount) external nonReentrant {
-        Stream memory stream = streams[streamId];
+        Stream storage stream = streams[streamId];
         require(stream.isActive, "Stream is not active");
-        require(msg.sender == stream.receiver || msg.sender == stream.sender, "Not stream party");
+        require(msg.sender == stream.sender || _isReceiver(streamId, msg.sender), "Not stream party");
 
         _updateStream(streamId);
 
-        Stream storage streamRef = streams[streamId];
-        uint256 claimable = streamRef.accruedUntilLastUpdate - streamRef.withdrawnAmount;
+        uint256 claimable = stream.accruedUntilLastUpdate - stream.withdrawnAmount;
         require(amount <= claimable, "Amount exceeds claimable balance");
 
-        streamRef.withdrawnAmount += amount;
-        streamRef.remainingBalance -= amount;
+        stream.withdrawnAmount += amount;
+        stream.remainingBalance -= amount;
 
-        IERC20(streamRef.token).transfer(streamRef.receiver, amount);
+        // Distribute based on percentages
+        for (uint i = 0; i < stream.receivers.length; i++) {
+            uint256 shareAmount = (amount * stream.sharePercentages[i]) / 100;
+            if (shareAmount > 0) {
+                IERC20(stream.token).transfer(stream.receivers[i], shareAmount);
+            }
+        }
 
-        emit StreamWithdrawn(streamId, streamRef.receiver, amount);
+        emit StreamWithdrawn(streamId, msg.sender, amount);
     }
 
     /**
@@ -284,14 +318,18 @@ contract BotFlowStreamer is ReentrancyGuard {
         uint256 refund = stream.remainingBalance - claimable;
 
         address sender = stream.sender;
-        address receiver = stream.receiver;
         address token = stream.token;
 
         stream.isActive = false;
         stream.remainingBalance = 0;
 
         if (claimable > 0) {
-            IERC20(token).transfer(receiver, claimable);
+            for (uint i = 0; i < stream.receivers.length; i++) {
+                uint256 shareAmount = (claimable * stream.sharePercentages[i]) / 100;
+                if (shareAmount > 0) {
+                    IERC20(token).transfer(stream.receivers[i], shareAmount);
+                }
+            }
         }
         if (refund > 0) {
             IERC20(token).transfer(sender, refund);

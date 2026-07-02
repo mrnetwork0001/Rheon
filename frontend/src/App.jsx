@@ -27,7 +27,7 @@ const ERC20_ABI = [
 ];
 
 const STREAMER_ABI = [
-  "function createStream(address receiver, address token, uint256 deposit, uint256 ratePerSecond, address sentryNode) returns (uint256)",
+  "function createStream(address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, address sentryNode) returns (uint256)",
   "function withdrawFromStream(uint256 streamId, uint256 amount)",
   "function pauseStream(uint256 streamId)",
   "function resumeStream(uint256 streamId)",
@@ -248,63 +248,39 @@ function App() {
       return;
     }
 
-    if (isSandbox) {
-      const newId = streams.length + 1;
-      const duration = (depVal / rateVal) * 1000; // in ms
-      const streamObj = {
-        id: newId,
-        sender: account || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        receiver: newStream.receiver,
-        tokenName: "USDT",
-        deposit: depVal,
-        ratePerSecond: rateVal,
-        startTime: Date.now(),
-        stopTime: Date.now() + duration,
-        withdrawn: 0,
-        isPaused: false,
-        isActive: true,
-        sentryNode: newStream.sentry,
-        accruedAtLastUpdate: 0,
-        lastUpdateTime: Date.now()
-      };
+    // Live Web3
+    if (!provider) return;
+    try {
+      setLoading(true);
+      const signer = await provider.getSigner();
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+      const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
       
-      setStreams([...streams, streamObj]);
-      setActiveStreamId(newId);
-      setUsdtBalance(prev => (parseFloat(prev) - depVal).toFixed(2));
-      addSentryLog("INFO", `Stream ${newId} created to ${newStream.receiver}. Sentry node assigned: ${newStream.sentry}`);
+      // Approve
+      const amountWei = ethers.parseUnits(newStream.deposit, 6);
+      addSentryLog("INFO", "Approving USDT for streaming...");
+      const appTx = await tokenContract.approve(streamerAddr, amountWei);
+      await appTx.wait();
+      addSentryLog("INFO", "Approval confirmed. Creating stream...");
 
-      // Try to register with Sentry Node
-      try {
-        await fetch(`${SENTRY_API_URL}/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ streamId: newId })
-        });
-      } catch (err) {}
-    } else {
-      // Live Web3
-      if (!provider) return;
-      try {
-        setLoading(true);
-        const signer = await provider.getSigner();
-        const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
-        const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
-        
-        // Approve
-        const amountWei = ethers.parseUnits(newStream.deposit, 6);
-        addSentryLog("INFO", "Approving USDT for streaming...");
-        const appTx = await tokenContract.approve(streamerAddr, amountWei);
-        await appTx.wait();
-        addSentryLog("INFO", "Approval confirmed. Creating stream...");
+      const rateWei = ethers.parseUnits(newStream.rate, 6);
+      
+      // Phase 1: Revenue Splitting Arrays (Hardcoded 70/20/10 for hackathon demo)
+      const receivers = [
+        newStream.receiver, 
+        "0x1111111111111111111111111111111111111111", // Dev/Creator Wallet
+        "0x2222222222222222222222222222222222222222"  // DAO Treasury
+      ];
+      const percentages = [70, 20, 10];
 
-        const rateWei = ethers.parseUnits(newStream.rate, 6);
-        const tx = await streamerContract.createStream(
-          newStream.receiver,
-          usdtAddr,
-          amountWei,
-          rateWei,
-          newStream.sentry
-        );
+      const tx = await streamerContract.createStream(
+        receivers,
+        percentages,
+        usdtAddr,
+        amountWei,
+        rateWei,
+        newStream.sentry
+      );
         addSentryLog("INFO", `Stream transaction sent: ${tx.hash}`);
         const receipt = await tx.wait();
         addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
