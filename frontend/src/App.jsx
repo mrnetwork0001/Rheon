@@ -38,7 +38,8 @@ const STREAMER_ABI = [
 
 const BDEX_ABI = [
   "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable returns (uint[] memory amounts)",
-  "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) returns (uint[] memory amounts)"
+  "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) returns (uint[] memory amounts)",
+  "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory amounts)"
 ];
 
 function App() {
@@ -506,19 +507,48 @@ function App() {
     return () => cancelAnimationFrame(tickerIntervalRef.current);
   }, [activeStreamId, streams]);
 
-  // Handle swap conversion estimation
+  // Real-time swap quote estimation
+  useEffect(() => {
+    const fetchQuote = async () => {
+      const numeric = parseFloat(swapAmount);
+      if (isNaN(numeric) || numeric <= 0 || !provider) {
+        setSwapEstimated("");
+        return;
+      }
+      try {
+        const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, provider);
+        const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
+        const USDT = usdtAddr;
+        let amountInWei, path;
+        
+        if (swapFrom === "BOT") {
+          amountInWei = ethers.parseEther(swapAmount);
+          path = [WBOT, USDT];
+        } else {
+          amountInWei = ethers.parseUnits(swapAmount, 6);
+          path = [USDT, WBOT];
+        }
+        
+        const amounts = await bdexContract.getAmountsOut(amountInWei, path);
+        
+        if (swapFrom === "BOT") {
+          setSwapEstimated(ethers.formatUnits(amounts[1], 6));
+        } else {
+          setSwapEstimated(ethers.formatEther(amounts[1]));
+        }
+      } catch (err) {
+        console.error("Quote error:", err);
+        setSwapEstimated("Error fetching quote");
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchQuote, 500);
+    return () => clearTimeout(timeoutId);
+  }, [swapAmount, swapFrom, provider, usdtAddr, bdexAddr]);
+
+  // Handle swap input change
   const handleSwapAmountChange = (val) => {
     setSwapAmount(val);
-    const numeric = parseFloat(val);
-    if (isNaN(numeric) || numeric <= 0) {
-      setSwapEstimated("");
-      return;
-    }
-    if (swapFrom === "BOT") {
-      setSwapEstimated((numeric * 2).toFixed(2));
-    } else {
-      setSwapEstimated((numeric / 2).toFixed(4));
-    }
   };
 
   const currentActiveStream = streams.find(s => s.id === activeStreamId);
