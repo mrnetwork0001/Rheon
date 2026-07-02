@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./BotFlowReceipt.sol";
+import "./MockYieldVault.sol";
 
 contract BotFlowStreamer is ReentrancyGuard {
     struct Stream {
@@ -27,9 +28,11 @@ contract BotFlowStreamer is ReentrancyGuard {
     uint256 public nextStreamId = 1;
     mapping(uint256 => Stream) public streams;
     BotFlowReceipt public receiptNFT;
+    MockYieldVault public yieldVault;
 
     constructor() {
         receiptNFT = new BotFlowReceipt(address(this));
+        yieldVault = new MockYieldVault();
     }
 
     event StreamCreated(
@@ -122,6 +125,10 @@ contract BotFlowStreamer is ReentrancyGuard {
 
         // Transfer tokens to contract
         IERC20(token).transferFrom(msg.sender, address(this), deposit);
+
+        // Deposit into DeFi yield vault for capital efficiency
+        IERC20(token).approve(address(yieldVault), deposit);
+        yieldVault.deposit(token, deposit);
 
         uint256 duration = deposit / ratePerSecond;
         uint256 stopTime = block.timestamp + duration;
@@ -228,6 +235,9 @@ contract BotFlowStreamer is ReentrancyGuard {
         stream.withdrawnAmount += amount;
         stream.remainingBalance -= amount;
 
+        // Withdraw from Yield Vault
+        yieldVault.withdraw(stream.token, amount);
+
         // Distribute based on percentages
         for (uint i = 0; i < stream.receivers.length; i++) {
             uint256 shareAmount = (amount * stream.sharePercentages[i]) / 100;
@@ -301,6 +311,10 @@ contract BotFlowStreamer is ReentrancyGuard {
         _updateStream(streamId);
 
         IERC20(stream.token).transferFrom(msg.sender, address(this), amount);
+        
+        // Deposit into DeFi yield vault
+        IERC20(stream.token).approve(address(yieldVault), amount);
+        yieldVault.deposit(stream.token, amount);
 
         stream.deposit += amount;
         stream.remainingBalance += amount;
@@ -328,6 +342,11 @@ contract BotFlowStreamer is ReentrancyGuard {
 
         stream.isActive = false;
         stream.remainingBalance = 0;
+
+        // Withdraw remaining balance from Yield Vault
+        if (claimable + refund > 0) {
+            yieldVault.withdraw(token, claimable + refund);
+        }
 
         if (claimable > 0) {
             for (uint i = 0; i < stream.receivers.length; i++) {
