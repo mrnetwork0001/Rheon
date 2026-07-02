@@ -37,9 +37,8 @@ const STREAMER_ABI = [
 ];
 
 const BDEX_ABI = [
-  "function swapBOTForUSDT() payable",
-  "function swapUSDTForBOT(uint256 usdtAmount)",
-  "function rate() view returns (uint256)"
+  "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable returns (uint[] memory amounts)",
+  "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) returns (uint[] memory amounts)"
 ];
 
 function App() {
@@ -48,12 +47,9 @@ function App() {
   const [account, setAccount] = useState("");
   const [network, setNetwork] = useState("Not Connected");
   const [provider, setProvider] = useState(null);
-  const [isSandbox, setIsSandbox] = useState(false);
-  
-  // Contracts address state
   const [streamerAddr, setStreamerAddr] = useState(import.meta.env.VITE_STREAMER_CONTRACT_ADDRESS || "");
-  const [usdtAddr, setUsdtAddr] = useState(import.meta.env.VITE_MOCK_USDT_ADDRESS || "");
-  const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_MOCK_BDEX_ADDRESS || "");
+  const [usdtAddr, setUsdtAddr] = useState(import.meta.env.VITE_USDT_ADDRESS || "");
+  const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_BDEX_ROUTER_ADDRESS || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
 
   // Balance states
   const [botBalance, setBotBalance] = useState("0.0");
@@ -148,7 +144,6 @@ function App() {
       
       setAccount(accounts[0]);
       setProvider(web3Provider);
-      setIsSandbox(false);
       setNetwork("BOT Chain Testnet");
       
       // Load balances
@@ -167,7 +162,6 @@ function App() {
     setAccount("");
     setNetwork("Not Connected");
     setProvider(null);
-    setIsSandbox(false);
     setBotBalance("0.0");
     setUsdtBalance("0.0");
     setStreams([]);
@@ -218,15 +212,10 @@ function App() {
   };
 
   useEffect(() => {
-    if (isSandbox) {
-      setBotBalance("100.0000");
-      setUsdtBalance("5000.00");
-    }
-    
     // Poll Sentry API
     const interval = setInterval(fetchSentryData, 3000);
     return () => clearInterval(interval);
-  }, [isSandbox, usdtAddr]);
+  }, []);
 
   // Handle trigger outage simulation
   const simulateSentryAction = async (statusType) => {
@@ -240,39 +229,10 @@ function App() {
       const data = await res.json();
       setSentryStatus(data.providerStatus);
 
-      // If in sandbox mode, auto-pause or trigger simulation directly
-      if (isSandbox && statusType !== "HEALTHY") {
-        setStreams(prev => prev.map(s => {
-          if (s.id === activeStreamId && !s.isPaused) {
-            addSentryLog("ACTION", `[Sandbox Sentry] Automatically paused stream ${s.id} due to ${statusType}.`);
-            return {
-              ...s,
-              isPaused: true,
-              accruedAtLastUpdate: calculateAccrued(s),
-              lastUpdateTime: Date.now()
-            };
-          }
-          return s;
-        }));
-      }
+      // In production, the backend Sentry Node will automatically call pauseStream
+      // on the smart contract when OUTAGE or DISPUTE is triggered.
     } catch (err) {
-      // Local server down, handle sandbox trigger anyway
-      if (isSandbox && statusType !== "HEALTHY") {
-        setStreams(prev => prev.map(s => {
-          if (s.id === activeStreamId && !s.isPaused) {
-            addSentryLog("ACTION", `[Sandbox Sentry] Automatically paused stream ${s.id} due to ${statusType}.`);
-            return {
-              ...s,
-              isPaused: true,
-              accruedAtLastUpdate: calculateAccrued(s),
-              lastUpdateTime: Date.now()
-            };
-          }
-          return s;
-        }));
-      } else {
-        alert("Sentry Node Server not running. Launch it using `npm start` in the sentry folder to test live API controls.");
-      }
+      alert("Sentry Node Server not running. Launch it using `npm start` in the sentry folder to test live API controls.");
     }
   };
 
@@ -359,73 +319,65 @@ function App() {
     }
   };
 
-  // Perform Swap simulation / Web3 implementation
+  // Perform Swap Web3 implementation
   const handleSwap = async (e) => {
     e.preventDefault();
     const amount = parseFloat(swapAmount);
     if (isNaN(amount) || amount <= 0) return;
 
-    if (isSandbox) {
+    if (!provider) return;
+    try {
       setLoading(true);
-      setTimeout(() => {
-        if (swapFrom === "BOT") {
-          if (parseFloat(botBalance) < amount) {
-            alert("Insufficient BOT balance");
-            setLoading(false);
-            return;
-          }
-          setBotBalance(prev => (parseFloat(prev) - amount).toFixed(4));
-          setUsdtBalance(prev => (parseFloat(prev) + amount * 2).toFixed(2));
-          addSentryLog("ACTION", `[BDEX Sandbox] Swapped ${amount} BOT for ${amount * 2} USDT`);
-        } else {
-          if (parseFloat(usdtBalance) < amount) {
-            alert("Insufficient USDT balance");
-            setLoading(false);
-            return;
-          }
-          setUsdtBalance(prev => (parseFloat(prev) - amount).toFixed(2));
-          setBotBalance(prev => (parseFloat(prev) + amount / 2).toFixed(4));
-          addSentryLog("ACTION", `[BDEX Sandbox] Swapped ${amount} USDT for ${amount / 2} BOT`);
-        }
-        setSwapAmount("");
-        setSwapEstimated("");
-        setLoading(false);
-      }, 500);
-    } else {
-      if (!provider) return;
-      try {
-        setLoading(true);
-        const signer = await provider.getSigner();
-        const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, signer);
+      const signer = await provider.getSigner();
+      const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, signer);
+      
+      const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
+      const USDT = usdtAddr;
+      const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 mins from now
 
-        if (swapFrom === "BOT") {
-          addSentryLog("INFO", `Swapping ${amount} BOT to USDT...`);
-          const tx = await bdexContract.swapBOTForUSDT({ value: ethers.parseEther(swapAmount) });
-          await tx.wait();
-          addSentryLog("INFO", "BOT to USDT Swap completed successfully.");
-        } else {
-          addSentryLog("INFO", `Swapping ${amount} USDT to BOT...`);
-          const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
-          const usdtWei = ethers.parseUnits(swapAmount, 6);
-          
-          // Approve BDEX
-          addSentryLog("INFO", "Approving USDT for swap...");
-          const appTx = await tokenContract.approve(bdexAddr, usdtWei);
-          await appTx.wait();
-          
-          const tx = await bdexContract.swapUSDTForBOT(usdtWei);
-          await tx.wait();
-          addSentryLog("INFO", "USDT to BOT Swap completed successfully.");
-        }
-        setSwapAmount("");
-        setSwapEstimated("");
-        await updateBalances(account, provider);
-      } catch (error) {
-        console.error(error);
-        addSentryLog("ERROR", `Swap failed: ${error.message}`);
-      } finally {
-        setLoading(false);
+      if (swapFrom === "BOT") {
+        addSentryLog("INFO", `Swapping ${amount} BOT to USDT...`);
+        const valueWei = ethers.parseEther(swapAmount);
+        const path = [WBOT, USDT];
+        
+        const tx = await bdexContract.swapExactETHForTokens(
+          0, // amountOutMin (0 for demo, ideally calculated to prevent slippage)
+          path,
+          account,
+          deadline,
+          { value: valueWei }
+        );
+        await tx.wait();
+        addSentryLog("INFO", "BOT to USDT Swap completed successfully.");
+      } else {
+        addSentryLog("INFO", `Swapping ${amount} USDT to BOT...`);
+        const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
+        const usdtWei = ethers.parseUnits(swapAmount, 6); // Assuming 6 decimals for USDT
+        const path = [USDT, WBOT];
+        
+        // Approve BDEX Router
+        addSentryLog("INFO", "Approving USDT for swap...");
+        const appTx = await tokenContract.approve(bdexAddr, usdtWei);
+        await appTx.wait();
+        
+        const tx = await bdexContract.swapExactTokensForETH(
+          usdtWei,
+          0, // amountOutMin
+          path,
+          account,
+          deadline
+        );
+        await tx.wait();
+        addSentryLog("INFO", "USDT to BOT Swap completed successfully.");
       }
+      setSwapAmount("");
+      setSwapEstimated("");
+      await updateBalances(account, provider);
+    } catch (error) {
+      console.error(error);
+      addSentryLog("ERROR", `Swap failed: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -446,84 +398,89 @@ function App() {
     return Math.min(totalAccrued, stream.deposit);
   };
 
-  // Pause / Resume Sandbox Streams
-  const toggleStreamPause = (id) => {
-    setStreams(prev => prev.map(s => {
-      if (s.id === id) {
-        const wasPaused = s.isPaused;
-        const currentAccrued = calculateAccrued(s);
-        
-        addSentryLog("INFO", `Stream ${id} manually ${wasPaused ? 'resumed' : 'paused'}.`);
-        
-        if (wasPaused) {
-          // Resuming: stopTime gets pushed forward based on remaining deposit
-          const unaccrued = s.deposit - currentAccrued;
-          const remainingMs = (unaccrued / s.ratePerSecond) * 1000;
-          return {
-            ...s,
-            isPaused: false,
-            accruedAtLastUpdate: currentAccrued,
-            lastUpdateTime: Date.now(),
-            stopTime: Date.now() + remainingMs
-          };
-        } else {
-          // Pausing
-          return {
-            ...s,
-            isPaused: true,
-            accruedAtLastUpdate: currentAccrued,
-            lastUpdateTime: Date.now()
-          };
-        }
+  // Pause / Resume Streams
+  const toggleStreamPause = async (id) => {
+    if (!provider) return;
+    try {
+      setLoading(true);
+      const str = streams.find(s => s.id === id);
+      if (!str) return;
+      
+      const signer = await provider.getSigner();
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+      
+      if (str.isPaused) {
+        addSentryLog("INFO", `Resuming stream ${id}...`);
+        const tx = await streamerContract.resumeStream(id);
+        await tx.wait();
+        addSentryLog("INFO", `Stream ${id} resumed.`);
+      } else {
+        addSentryLog("INFO", `Pausing stream ${id}...`);
+        const tx = await streamerContract.pauseStream(id);
+        await tx.wait();
+        addSentryLog("INFO", `Stream ${id} paused.`);
       }
-      return s;
-    }));
+      await updateBalances(account, provider);
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Failed to toggle pause: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Withdraw sandbox stream tokens
-  const handleSandboxWithdraw = (id) => {
-    setStreams(prev => prev.map(s => {
-      if (s.id === id) {
-        const currentAccrued = calculateAccrued(s);
-        const claimable = currentAccrued - s.withdrawn;
-        if (claimable <= 0.01) {
-          alert("Nothing accrued to withdraw yet");
-          return s;
-        }
-
-        setUsdtBalance(prevBal => (parseFloat(prevBal) + claimable).toFixed(2));
-        addSentryLog("ACTION", `Withdrawn ${claimable.toFixed(4)} USDT from Stream ${id}`);
-
-        return {
-          ...s,
-          withdrawn: s.withdrawn + claimable,
-          accruedAtLastUpdate: currentAccrued,
-          lastUpdateTime: Date.now()
-        };
+  // Withdraw stream tokens
+  const handleWithdraw = async (id) => {
+    if (!provider) return;
+    try {
+      setLoading(true);
+      const str = streams.find(s => s.id === id);
+      if (!str) return;
+      
+      const currentAccrued = calculateAccrued(str);
+      const claimable = currentAccrued - str.withdrawn;
+      if (claimable <= 0.01) {
+        alert("Nothing accrued to withdraw yet");
+        return;
       }
-      return s;
-    }));
+      
+      const signer = await provider.getSigner();
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+      
+      addSentryLog("INFO", `Withdrawing from stream ${id}...`);
+      const claimableWei = ethers.parseUnits(claimable.toFixed(6), 6);
+      const tx = await streamerContract.withdrawFromStream(id, claimableWei);
+      await tx.wait();
+      addSentryLog("ACTION", `Withdrawn ${claimable.toFixed(4)} USDT from Stream ${id}`);
+      
+      await updateBalances(account, provider);
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Failed to withdraw: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Cancel Stream
-  const handleCancelStream = (id) => {
-    if (isSandbox) {
-      setStreams(prev => prev.map(s => {
-        if (s.id === id) {
-          const currentAccrued = calculateAccrued(s);
-          const claimable = currentAccrued - s.withdrawn;
-          const refund = s.deposit - currentAccrued;
-          
-          setUsdtBalance(prevBal => (parseFloat(prevBal) + claimable + refund).toFixed(2));
-          addSentryLog("ACTION", `Stream ${id} cancelled. ${claimable.toFixed(4)} USDT withdrawn to Receiver, ${refund.toFixed(4)} USDT refunded to Sender.`);
-          return {
-            ...s,
-            isActive: false,
-            isPaused: false
-          };
-        }
-        return s;
-      }));
+  const handleCancelStream = async (id) => {
+    if (!provider) return;
+    try {
+      setLoading(true);
+      const signer = await provider.getSigner();
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+      
+      addSentryLog("INFO", `Cancelling stream ${id}...`);
+      const tx = await streamerContract.cancelStream(id);
+      await tx.wait();
+      addSentryLog("ACTION", `Stream ${id} cancelled successfully.`);
+      
+      await updateBalances(account, provider);
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Failed to cancel stream: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -782,7 +739,7 @@ function App() {
                     </button>
                     <button 
                       className="btn btn-primary"
-                      onClick={() => handleSandboxWithdraw(currentActiveStream.id)}
+                      onClick={() => handleWithdraw(currentActiveStream.id)}
                       disabled={tickerClaimable <= 0.01}
                     >
                       <RotateCcw size={16} />
