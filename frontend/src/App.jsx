@@ -794,10 +794,6 @@ function App() {
                 <a href="#">BDEX Swap</a>
               </div>
             </div>
-          </div>
-          <div className="footer-bottom">
-            <p>© 2026 BotFlow. Built for the BOT Chain Builder Challenge #1.</p>
-          </div>
         </footer>
       </div>
     );
