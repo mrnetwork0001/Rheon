@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./BotFlowReceipt.sol";
 import "./MockYieldVault.sol";
+import "./BotFlowDAO.sol";
 
 contract BotFlowStreamer is ReentrancyGuard {
     struct Stream {
@@ -22,6 +23,7 @@ contract BotFlowStreamer is ReentrancyGuard {
         uint256 lastUpdateTime;
         address sentryNode; // AI Sentry Node address that can monitor and pause/adjust this stream
         bool isPaused;
+        bool isDisputed;
         bool isActive;
     }
 
@@ -29,10 +31,12 @@ contract BotFlowStreamer is ReentrancyGuard {
     mapping(uint256 => Stream) public streams;
     BotFlowReceipt public receiptNFT;
     MockYieldVault public yieldVault;
+    BotFlowDAO public daoContract;
 
     constructor() {
         receiptNFT = new BotFlowReceipt(address(this));
         yieldVault = new MockYieldVault();
+        daoContract = new BotFlowDAO(address(this));
     }
 
     event StreamCreated(
@@ -53,6 +57,8 @@ contract BotFlowStreamer is ReentrancyGuard {
     event StreamAdjusted(uint256 indexed streamId, address indexed by, uint256 oldRate, uint256 newRate, uint256 newStopTime);
     event StreamCancelled(uint256 indexed streamId, uint256 receiverAmount, uint256 senderAmount);
     event StreamToppedUp(uint256 indexed streamId, address indexed sender, uint256 amount, uint256 newStopTime);
+    event StreamDisputed(uint256 indexed streamId, address indexed by);
+    event DisputeResolved(uint256 indexed streamId, bool refundUser);
 
     function _isReceiver(uint256 streamId, address addr) internal view returns (bool) {
         address[] memory recs = streams[streamId].receivers;
@@ -149,6 +155,7 @@ contract BotFlowStreamer is ReentrancyGuard {
             lastUpdateTime: block.timestamp,
             sentryNode: sentryNode,
             isPaused: false,
+            isDisputed: false,
             isActive: true
         });
 
@@ -255,6 +262,7 @@ contract BotFlowStreamer is ReentrancyGuard {
     function pauseStream(uint256 streamId) external onlyStreamParty(streamId) {
         Stream storage stream = streams[streamId];
         require(!stream.isPaused, "Stream is already paused");
+        require(!stream.isDisputed, "Cannot pause a disputed stream manually");
 
         _updateStream(streamId);
         stream.isPaused = true;
@@ -268,6 +276,7 @@ contract BotFlowStreamer is ReentrancyGuard {
     function resumeStream(uint256 streamId) external onlyStreamParty(streamId) {
         Stream storage stream = streams[streamId];
         require(stream.isPaused, "Stream is not paused");
+        require(!stream.isDisputed, "Cannot manually resume a disputed stream");
 
         stream.isPaused = false;
         stream.lastUpdateTime = block.timestamp;
@@ -328,11 +337,47 @@ contract BotFlowStreamer is ReentrancyGuard {
     }
 
     /**
-     * @notice Cancels the stream. Accrued balance is sent to receiver, remaining is refunded to sender.
+     * @notice Opens a dispute on the stream, freezing it for DAO resolution.
      */
-    function cancelStream(uint256 streamId) external nonReentrant onlyStreamParty(streamId) {
+    function disputeStream(uint256 streamId) external onlyStreamParty(streamId) {
+        Stream storage stream = streams[streamId];
+        require(!stream.isDisputed, "Already disputed");
+        
         _updateStream(streamId);
+        stream.isPaused = true;
+        stream.isDisputed = true;
 
+        emit StreamDisputed(streamId, msg.sender);
+    }
+
+    /**
+     * @notice Resolved a dispute. Called by the DAO.
+     */
+    function resolveDispute(uint256 streamId, bool refundUser) external {
+        require(msg.sender == address(daoContract), "Only DAO can resolve");
+        Stream storage stream = streams[streamId];
+        require(stream.isDisputed, "Not disputed");
+
+        stream.isDisputed = false;
+        
+        if (refundUser) {
+            _cancelInternal(streamId);
+        } else {
+            stream.isPaused = false;
+            stream.lastUpdateTime = block.timestamp;
+            uint256 unaccrued = stream.deposit - stream.accruedUntilLastUpdate;
+            uint256 remainingDuration = unaccrued / stream.ratePerSecond;
+            stream.stopTime = block.timestamp + remainingDuration;
+            emit StreamResumed(streamId, msg.sender, stream.stopTime);
+        }
+        
+        emit DisputeResolved(streamId, refundUser);
+    }
+
+    /**
+     * @notice Internal logic for cancellation, shared between cancelStream and resolveDispute
+     */
+    function _cancelInternal(uint256 streamId) internal {
         Stream storage stream = streams[streamId];
         uint256 claimable = stream.accruedUntilLastUpdate - stream.withdrawnAmount;
         uint256 refund = stream.remainingBalance - claimable;
@@ -365,5 +410,14 @@ contract BotFlowStreamer is ReentrancyGuard {
         receiptNFT.mintReceipt(sender, streamId, stream.withdrawnAmount + claimable, duration);
 
         emit StreamCancelled(streamId, claimable, refund);
+    }
+
+    /**
+     * @notice Cancels the stream. Accrued balance is sent to receiver, remaining is refunded to sender.
+     */
+    function cancelStream(uint256 streamId) external nonReentrant onlyStreamParty(streamId) {
+        require(!streams[streamId].isDisputed, "Cannot cancel a disputed stream directly");
+        _updateStream(streamId);
+        _cancelInternal(streamId);
     }
 }
