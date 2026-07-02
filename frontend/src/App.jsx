@@ -71,7 +71,7 @@ function App() {
     receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
     deposit: "100",
     rate: "0.1",
-    sentry: "0x15d34AAf54f6577393b74d6A22e18517860D268A"
+    sentry: "0x15d34aaf54f6577393b74d6a22e18517860d268a"
   });
 
   // Swap State
@@ -81,7 +81,7 @@ function App() {
 
   // Sentry Node Integration State
   const [sentryStatus, setSentryStatus] = useState("HEALTHY");
-  const [sentryAddress, setSentryAddress] = useState("0x15d34AAf54f6577393b74d6A22e18517860D268A");
+  const [sentryAddress, setSentryAddress] = useState("0x15d34aaf54f6577393b74d6a22e18517860d268a");
   const [sentryLogs, setSentryLogs] = useState([
     { timestamp: new Date().toISOString(), type: "INFO", message: "Sentry dashboard initialized. Waiting for connection..." }
   ]);

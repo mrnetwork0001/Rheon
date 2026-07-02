@@ -2,12 +2,15 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./BotFlowReceipt.sol";
 import "./MockYieldVault.sol";
 import "./BotFlowDAO.sol";
 
 contract BotFlowStreamer is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     struct Stream {
         address sender;
         address[] receivers;
@@ -130,10 +133,10 @@ contract BotFlowStreamer is ReentrancyGuard {
         require(totalPercentage == 100, "Percentages must sum to 100");
 
         // Transfer tokens to contract
-        IERC20(token).transferFrom(msg.sender, address(this), deposit);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), deposit);
 
         // Deposit into DeFi yield vault for capital efficiency
-        IERC20(token).approve(address(yieldVault), deposit);
+        IERC20(token).forceApprove(address(yieldVault), deposit);
         yieldVault.deposit(token, deposit);
 
         uint256 duration = deposit / ratePerSecond;
@@ -245,11 +248,11 @@ contract BotFlowStreamer is ReentrancyGuard {
         // Withdraw from Yield Vault
         yieldVault.withdraw(stream.token, amount);
 
-        // Distribute based on percentages
+        // Process actual token transfers
         for (uint i = 0; i < stream.receivers.length; i++) {
-            uint256 shareAmount = (amount * stream.sharePercentages[i]) / 100;
-            if (shareAmount > 0) {
-                IERC20(stream.token).transfer(stream.receivers[i], shareAmount);
+            uint256 share = (amount * stream.sharePercentages[i]) / 100;
+            if (share > 0) {
+                IERC20(stream.token).safeTransfer(stream.receivers[i], share);
             }
         }
 
@@ -319,10 +322,11 @@ contract BotFlowStreamer is ReentrancyGuard {
 
         _updateStream(streamId);
 
-        IERC20(stream.token).transferFrom(msg.sender, address(this), amount);
-        
-        // Deposit into DeFi yield vault
-        IERC20(stream.token).approve(address(yieldVault), amount);
+        // Transfer top-up tokens
+        IERC20(stream.token).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Deposit top-up into DeFi vault
+        IERC20(stream.token).forceApprove(address(yieldVault), amount);
         yieldVault.deposit(stream.token, amount);
 
         stream.deposit += amount;
@@ -379,8 +383,8 @@ contract BotFlowStreamer is ReentrancyGuard {
      */
     function _cancelInternal(uint256 streamId) internal {
         Stream storage stream = streams[streamId];
-        uint256 claimable = stream.accruedUntilLastUpdate - stream.withdrawnAmount;
-        uint256 refund = stream.remainingBalance - claimable;
+        uint256 receiverAmount = stream.accruedUntilLastUpdate - stream.withdrawnAmount;
+        uint256 senderAmount = stream.remainingBalance - receiverAmount;
 
         address sender = stream.sender;
         address token = stream.token;
@@ -389,27 +393,29 @@ contract BotFlowStreamer is ReentrancyGuard {
         stream.remainingBalance = 0;
 
         // Withdraw remaining balance from Yield Vault
-        if (claimable + refund > 0) {
-            yieldVault.withdraw(token, claimable + refund);
+        if (receiverAmount + senderAmount > 0) {
+            yieldVault.withdraw(token, receiverAmount + senderAmount);
         }
 
-        if (claimable > 0) {
+        if (receiverAmount > 0) {
+            // Split receiver amount among receivers
             for (uint i = 0; i < stream.receivers.length; i++) {
-                uint256 shareAmount = (claimable * stream.sharePercentages[i]) / 100;
-                if (shareAmount > 0) {
-                    IERC20(token).transfer(stream.receivers[i], shareAmount);
+                uint256 share = (receiverAmount * stream.sharePercentages[i]) / 100;
+                if (share > 0) {
+                    IERC20(stream.token).safeTransfer(stream.receivers[i], share);
                 }
             }
         }
-        if (refund > 0) {
-            IERC20(token).transfer(sender, refund);
+
+        if (senderAmount > 0) {
+            IERC20(stream.token).safeTransfer(sender, senderAmount);
         }
 
         // Mint Proof-of-Compute NFT to sender
-        uint256 duration = stream.lastUpdateTime - stream.startTime;
-        receiptNFT.mintReceipt(sender, streamId, stream.withdrawnAmount + claimable, duration);
+        uint256 duration = stream.stopTime - stream.startTime;
+        receiptNFT.mintReceipt(sender, streamId, stream.withdrawnAmount + receiverAmount, duration);
 
-        emit StreamCancelled(streamId, claimable, refund);
+        emit StreamCancelled(streamId, receiverAmount, senderAmount);
     }
 
     /**
