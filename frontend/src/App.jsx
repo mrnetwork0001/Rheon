@@ -312,6 +312,11 @@ function App() {
       return;
     }
 
+    if (depVal > parseFloat(usdtBalance)) {
+      alert("Insufficient USDT balance. You must have at least the initial deposit amount in your wallet.");
+      return;
+    }
+
     // Live Web3
     if (!provider) return;
     try {
@@ -368,6 +373,15 @@ function App() {
     e.preventDefault();
     const amount = parseFloat(swapAmount);
     if (isNaN(amount) || amount <= 0) return;
+
+    if (swapFrom === "BOT" && amount > parseFloat(botBalance)) {
+      alert("Insufficient BOT balance for this swap.");
+      return;
+    }
+    if (swapFrom === "USDT" && amount > parseFloat(usdtBalance)) {
+      alert("Insufficient USDT balance for this swap.");
+      return;
+    }
 
     if (!provider) return;
     try {
@@ -1096,6 +1110,11 @@ function App() {
                     />
                     <span className="input-suffix">USDT</span>
                   </div>
+                  {parseFloat(newStream.deposit) > parseFloat(usdtBalance) && (
+                    <div style={{ color: 'var(--state-error)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                      Insufficient balance (You have {usdtBalance} USDT)
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -1141,7 +1160,7 @@ function App() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading || parseFloat(newStream.deposit) > parseFloat(usdtBalance)}>
                 <Zap size={16} />
                 Open Stream
               </button>
@@ -1197,6 +1216,16 @@ function App() {
                     />
                     <span className="swap-token-select">{swapFrom}</span>
                   </div>
+                  {swapFrom === "BOT" && parseFloat(swapAmount) > parseFloat(botBalance) && (
+                    <div style={{ color: 'var(--state-error)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                      Insufficient BOT balance
+                    </div>
+                  )}
+                  {swapFrom === "USDT" && parseFloat(swapAmount) > parseFloat(usdtBalance) && (
+                    <div style={{ color: 'var(--state-error)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                      Insufficient USDT balance
+                    </div>
+                  )}
                 </div>
 
                 <div className="swap-divider">
@@ -1227,7 +1256,12 @@ function App() {
                 Exchange Rate based on Testnet Liquidity Pool
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading || !swapAmount}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={
+                loading || 
+                !swapAmount || 
+                (swapFrom === "BOT" && parseFloat(swapAmount) > parseFloat(botBalance)) ||
+                (swapFrom === "USDT" && parseFloat(swapAmount) > parseFloat(usdtBalance))
+              }>
                 Swap Assets
               </button>
             </form>
