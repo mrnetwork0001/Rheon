@@ -680,18 +680,29 @@ function App() {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-glow"></div>
-          <h1 className="hero-title">The Real-Time PayFi Protocol for AI Agents</h1>
-          <p className="hero-subtitle">
-            Stream micro-payments to AI agents with sub-second finality. Featuring automated revenue splitting, idle deposit yield generation, and a decentralized dispute DAO.
-          </p>
-          <div className="hero-buttons">
-            <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
-              Launch Console
-              <Zap size={18} />
-            </button>
-            <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg">
-              Explore Codebase
-            </a>
+          <div className="hero-container">
+            <div className="hero-content-left">
+              <h1 className="hero-title">The Real-Time PayFi Protocol for AI Agents</h1>
+              <p className="hero-subtitle">
+                Stream micro-payments to AI agents with sub-second finality. Featuring automated revenue splitting, idle deposit yield generation, and a decentralized dispute DAO.
+              </p>
+              <div className="hero-buttons">
+                <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
+                  Launch Console
+                  <Zap size={18} />
+                </button>
+                <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg">
+                  Explore Codebase
+                </a>
+              </div>
+            </div>
+            <div className="hero-media-right">
+              <img 
+                src="/images/hero_ai_payfi.png" 
+                className="hero-illustration" 
+                alt="BotFlow AI PayFi" 
+              />
+            </div>
           </div>
 
           {/* Stats Grid */}
