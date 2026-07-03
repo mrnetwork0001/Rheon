@@ -51,6 +51,7 @@ const BDEX_ABI = [
 
 function App() {
   const [view, setView] = useState("landing");
+  const [dashboardView, setDashboardView] = useState("creator");
   // Web3 state
   const [account, setAccount] = useState("");
   const [network, setNetwork] = useState("Not Connected");
@@ -830,6 +831,61 @@ function App() {
       </header>
 
       {/* Main Dashboard Section */}
+      <div className="dashboard-toggle-container">
+        <div className="dashboard-toggle">
+          <button 
+            className={dashboardView === "creator" ? "active" : ""} 
+            onClick={() => setDashboardView("creator")}
+          >
+            Creator View
+          </button>
+          <button 
+            className={dashboardView === "recipient" ? "active" : ""} 
+            onClick={() => setDashboardView("recipient")}
+          >
+            Recipient View
+          </button>
+        </div>
+      </div>
+
+      {dashboardView === "creator" && (
+        <div className="dashboard-metrics">
+          <div className="metric-card">
+            <span className="metric-label">Total Value Locked</span>
+            <span className="metric-value">
+              {streams.reduce((acc, s) => acc + s.deposit, 0).toFixed(2)} USDT
+            </span>
+            <span className="metric-subtext">Across {streams.length} active streams</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">DeFi Yield Earned</span>
+            <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
+              {(streams.reduce((acc, s) => acc + s.deposit, 0) * 0.05).toFixed(2)} USDT
+            </span>
+            <span className="metric-subtext highlight">5% APY in Mock Vault</span>
+          </div>
+        </div>
+      )}
+
+      {dashboardView === "recipient" && (
+        <div className="dashboard-metrics">
+          <div className="metric-card">
+            <span className="metric-label">Total Incoming Revenue</span>
+            <span className="metric-value">
+              {streams.reduce((acc, s) => acc + (s.isActive ? tickerClaimable : s.withdrawn), 0).toFixed(4)} USDT
+            </span>
+            <span className="metric-subtext">Received & Claimable</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">Active Income Streams</span>
+            <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
+              {streams.filter(s => s.isActive).length}
+            </span>
+            <span className="metric-subtext highlight">Streaming in real-time</span>
+          </div>
+        </div>
+      )}
+
       <div className="grid-layout">
         
         {/* Left Side: Realtime Ticker & Stream List */}
@@ -855,13 +911,15 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
                 {currentActiveStream && currentActiveStream.isActive && (
                   <>
-                    <button 
-                      className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
-                      onClick={() => toggleStreamPause(currentActiveStream.id)}
-                    >
-                      {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
-                      {currentActiveStream.isPaused ? "Resume" : "Pause"}
-                    </button>
+                    {dashboardView === "creator" && (
+                      <button 
+                        className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
+                        onClick={() => toggleStreamPause(currentActiveStream.id)}
+                      >
+                        {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
+                        {currentActiveStream.isPaused ? "Resume" : "Pause"}
+                      </button>
+                    )}
                     <button 
                       className="btn btn-primary"
                       onClick={() => handleWithdraw(currentActiveStream.id)}
@@ -904,7 +962,7 @@ function App() {
           <div className="glass-card">
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Coins size={20} className="text-cyan" />
-              Your Payment Streams
+              {dashboardView === "creator" ? "Your Outgoing Streams" : "Your Incoming Streams"}
             </h3>
             
             <div className="stream-list">
@@ -916,7 +974,9 @@ function App() {
                   style={{ cursor: stream.isActive ? 'pointer' : 'default' }}
                 >
                   <div className="stream-info">
-                    <span className="stream-party">Stream #{stream.id} to AI Agent</span>
+                    <span className="stream-party">
+                      {dashboardView === "creator" ? `Stream #${stream.id} to AI Agent` : `Stream #${stream.id} from Creator`}
+                    </span>
                     <span className="stream-meta">
                       <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
                       <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
@@ -930,7 +990,7 @@ function App() {
                   </div>
                   
                   <div className="stream-action-group" onClick={e => e.stopPropagation()}>
-                    {stream.isActive && !stream.isDisputed && (
+                    {stream.isActive && !stream.isDisputed && dashboardView === "creator" && (
                       <>
                         <button 
                           className="btn btn-secondary" 
@@ -955,7 +1015,7 @@ function App() {
                         </button>
                       </>
                     )}
-                    {stream.isActive && stream.isDisputed && (
+                    {stream.isActive && stream.isDisputed && dashboardView === "creator" && (
                       <button 
                         className="btn" 
                         style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#eab308', color: 'black', border: 'none' }}
@@ -971,7 +1031,8 @@ function App() {
           </div>
 
           {/* Create Stream Panel */}
-          <div className="glass-card">
+          {dashboardView === "creator" && (
+            <div className="glass-card">
             <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Activity size={20} className="text-cyan" />
               Initialize New Stream
@@ -1053,6 +1114,7 @@ function App() {
               </button>
             </form>
           </div>
+          )}
 
         </div>
 

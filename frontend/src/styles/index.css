@@ -920,6 +920,8 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  text-align: left;
+  align-items: flex-start;
 }
 
 .footer-col h4 {
@@ -949,4 +951,105 @@ footer {
   text-align: left;
   color: var(--color-text-muted);
   font-size: 0.8rem;
+}
+/* Dashboard Toggle Styles */
+.dashboard-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.dashboard-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 30px;
+  padding: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 0.75rem 2rem;
+  border-radius: 25px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dashboard-toggle button.active {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);
+}
+
+/* Dashboard Metrics Styles */
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+}
+
+.metric-card .metric-label {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-card .metric-value {
+  color: var(--color-text-primary);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.metric-card .metric-subtext {
+  color: var(--color-success);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.metric-card .metric-subtext.highlight {
+  color: var(--color-primary);
 }
