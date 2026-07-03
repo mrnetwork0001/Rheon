@@ -260,6 +260,23 @@ function App() {
     }
   }, [account, provider, streamerAddr]);
 
+  // Auto-select active stream when switching dashboards
+  useEffect(() => {
+    if (!account) return;
+    const displayed = streams.filter(s => 
+      dashboardView === "creator" 
+        ? s.sender.toLowerCase() === account.toLowerCase() 
+        : s.sender.toLowerCase() !== account.toLowerCase()
+    );
+    if (displayed.length > 0) {
+      if (!displayed.some(s => s.id === activeStreamId)) {
+        setActiveStreamId(displayed[0].id);
+      }
+    } else {
+      setActiveStreamId(null);
+    }
+  }, [dashboardView, streams, account, activeStreamId]);
+
   // Fetch Sentry Server Status and Logs
   const fetchSentryData = async () => {
     try {
@@ -920,14 +937,23 @@ function App() {
           <div className="metric-card">
             <span className="metric-label">Total Value Locked</span>
             <span className="metric-value">
-              {streams.reduce((acc, s) => acc + s.deposit, 0).toFixed(2)} USDT
+              {streams
+                .filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive)
+                .reduce((acc, s) => acc + s.deposit, 0)
+                .toFixed(2)} USDT
             </span>
-            <span className="metric-subtext">Across {streams.length} active streams</span>
+            <span className="metric-subtext">
+              Across {streams.filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive).length} active streams
+            </span>
           </div>
           <div className="metric-card">
             <span className="metric-label">DeFi Yield Earned</span>
             <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
-              {(streams.reduce((acc, s) => acc + s.deposit, 0) * 0.05).toFixed(2)} USDT
+              {(
+                streams
+                  .filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive)
+                  .reduce((acc, s) => acc + s.deposit, 0) * 0.05
+              ).toFixed(2)} USDT
             </span>
             <span className="metric-subtext highlight">5% APY in Mock Vault</span>
           </div>
@@ -939,14 +965,17 @@ function App() {
           <div className="metric-card">
             <span className="metric-label">Total Incoming Revenue</span>
             <span className="metric-value">
-              {streams.reduce((acc, s) => acc + (s.isActive ? tickerClaimable : s.withdrawn), 0).toFixed(4)} USDT
+              {streams
+                .filter(s => s.sender.toLowerCase() !== account.toLowerCase())
+                .reduce((acc, s) => acc + (s.isActive ? calculateAccrued(s) : s.withdrawn), 0)
+                .toFixed(4)} USDT
             </span>
             <span className="metric-subtext">Received & Claimable</span>
           </div>
           <div className="metric-card">
             <span className="metric-label">Active Income Streams</span>
             <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
-              {streams.filter(s => s.isActive).length}
+              {streams.filter(s => s.sender.toLowerCase() !== account.toLowerCase() && s.isActive).length}
             </span>
             <span className="metric-subtext highlight">Streaming in real-time</span>
           </div>
@@ -959,48 +988,52 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Active Ticking Counter */}
-          <div className="glass-card">
-            <div className="live-counter-container">
-              <span className="live-counter-label">Active Flow Accumulation</span>
-              <div className="live-ticker">
-                {tickerAccrued.toFixed(6)}
-                <span className="live-ticker-symbol">USDT</span>
-              </div>
+          {!currentActiveStream || !currentActiveStream.isActive ? (
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', textAlign: 'center' }}>
+              <Activity size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', opacity: 0.5 }} />
+              <h3 style={{ color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>No Active Stream Selected</h3>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
+                There are no active real-time streaming channels running on this wallet view. Select an active stream below or initialize a new one to monitor live yield.
+              </p>
             </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Claimable Balance</span>
-                <p style={{ fontSize: '1.5rem', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
-                  {tickerClaimable.toFixed(4)} USDT
-                </p>
+          ) : (
+            <div className="glass-card">
+              <div className="live-counter-container">
+                <span className="live-counter-label">Active Flow Accumulation</span>
+                <div className="live-ticker">
+                  {tickerAccrued.toFixed(6)}
+                  <span className="live-ticker-symbol">USDT</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
-                {currentActiveStream && currentActiveStream.isActive && (
-                  <>
-                    {dashboardView === "creator" && (
-                      <button 
-                        className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
-                        onClick={() => toggleStreamPause(currentActiveStream.id)}
-                      >
-                        {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
-                        {currentActiveStream.isPaused ? "Resume" : "Pause"}
-                      </button>
-                    )}
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Claimable Balance</span>
+                  <p style={{ fontSize: '1.5rem', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
+                    {tickerClaimable.toFixed(4)} USDT
+                  </p>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+                  {dashboardView === "creator" && (
                     <button 
-                      className="btn btn-primary"
-                      onClick={() => handleWithdraw(currentActiveStream.id)}
-                      disabled={tickerClaimable <= 0.01}
+                      className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
+                      onClick={() => toggleStreamPause(currentActiveStream.id)}
                     >
-                      <RotateCcw size={16} />
-                      Withdraw
+                      {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
+                      {currentActiveStream.isPaused ? "Resume" : "Pause"}
                     </button>
-                  </>
-                )}
+                  )}
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => handleWithdraw(currentActiveStream.id)}
+                    disabled={tickerClaimable <= 0.01}
+                  >
+                    <RotateCcw size={16} />
+                    Withdraw
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {currentActiveStream && (
               <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Sender</span>
@@ -1022,8 +1055,8 @@ function App() {
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.deposit} USDT</span>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Active Streams Panel */}
           <div className="glass-card">
@@ -1033,7 +1066,13 @@ function App() {
             </h3>
             
             <div className="stream-list">
-              {streams.map(stream => (
+              {streams
+                .filter(s => 
+                  dashboardView === "creator" 
+                    ? s.sender.toLowerCase() === account.toLowerCase() 
+                    : s.sender.toLowerCase() !== account.toLowerCase()
+                )
+                .map(stream => (
                 <div 
                   key={stream.id} 
                   className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
