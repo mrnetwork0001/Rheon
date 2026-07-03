@@ -35,7 +35,8 @@ const STREAMER_ABI = [
   "function disputeStream(uint256 streamId)",
   "function resolveDispute(uint256 streamId, bool refundUser)",
   "function getAccrued(uint256 streamId) view returns (uint256)",
-  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive)"
+  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive)",
+  "function nextStreamId() view returns (uint256)"
 ];
 
 const DAO_ABI = [
@@ -196,6 +197,60 @@ function App() {
     }
   };
 
+  // Real-time polling function
+  const fetchRealtimeData = async () => {
+    if (!account || !provider || !streamerAddr) return;
+    try {
+      // 1. Update balances
+      await updateBalances(account, provider);
+      
+      // 2. Fetch streams from the blockchain
+      const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, provider);
+      const nextId = await streamerContract.nextStreamId();
+      const totalStreams = Number(nextId) - 1;
+      
+      let fetchedStreams = [];
+      for (let i = 1; i <= totalStreams; i++) {
+        const s = await streamerContract.streams(i);
+        const sender = s[0].toLowerCase();
+        const receiver = s[1].toLowerCase();
+        const currentUser = account.toLowerCase();
+        
+        if (sender === currentUser || receiver === currentUser) {
+          fetchedStreams.push({
+            id: i,
+            sender: s[0],
+            receiver: s[1],
+            tokenName: "USDT",
+            deposit: parseFloat(ethers.formatUnits(s[3], 6)),
+            ratePerSecond: parseFloat(ethers.formatUnits(s[4], 6)),
+            startTime: Number(s[5]) * 1000,
+            stopTime: Number(s[6]) * 1000,
+            withdrawn: parseFloat(ethers.formatUnits(s[9], 6)),
+            isPaused: s[12],
+            isDisputed: s[13],
+            isActive: s[14],
+            sentryNode: s[11],
+            accruedAtLastUpdate: parseFloat(ethers.formatUnits(s[8], 6)),
+            lastUpdateTime: Number(s[10]) * 1000
+          });
+        }
+      }
+      setStreams(fetchedStreams);
+    } catch (e) {
+      console.error("Error fetching real-time data:", e);
+    }
+  };
+
+  // Setup polling interval when connected
+  useEffect(() => {
+    if (account && provider) {
+      fetchRealtimeData();
+      const interval = setInterval(fetchRealtimeData, 5000); // 5 seconds real-time sync
+      return () => clearInterval(interval);
+    }
+  }, [account, provider, streamerAddr]);
+
   // Fetch Sentry Server Status and Logs
   const fetchSentryData = async () => {
     try {
@@ -294,34 +349,12 @@ function App() {
         const receipt = await tx.wait();
         addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
         
-        // Update local React state to visualize the Web3 Stream (Feature 1 & 3 UI)
-        const newId = streams.length + 1; // Local mock ID mapping
-        const depVal = parseFloat(newStream.deposit);
-        const rateVal = parseFloat(newStream.rate);
-        const durationMs = (depVal / rateVal) * 1000;
+        // Sync real-time data from blockchain instead of local mock state
+        await fetchRealtimeData();
         
-        const streamObj = {
-          id: newId,
-          sender: account,
-          receiver: newStream.receiver,
-          tokenName: "USDT",
-          deposit: depVal,
-          ratePerSecond: rateVal,
-          startTime: Date.now(),
-          stopTime: Date.now() + durationMs,
-          withdrawn: 0,
-          isPaused: false,
-          isDisputed: false,
-          isActive: true,
-          sentryNode: newStream.sentry,
-          accruedAtLastUpdate: 0,
-          lastUpdateTime: Date.now()
-        };
-        setStreams([...streams, streamObj]);
-        setActiveStreamId(newId);
-        
-        // Reload balances
-        await updateBalances(account, provider);
+        // Find the newest stream to set as active
+        const nextId = await streamerContract.nextStreamId();
+        setActiveStreamId(Number(nextId) - 1);
       } catch (error) {
         console.error(error);
         addSentryLog("ERROR", `Failed to create stream: ${error.message}`);
