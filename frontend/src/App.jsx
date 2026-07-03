@@ -35,7 +35,7 @@ const STREAMER_ABI = [
   "function disputeStream(uint256 streamId)",
   "function resolveDispute(uint256 streamId, bool refundUser)",
   "function getAccrued(uint256 streamId) view returns (uint256)",
-  "function streams(uint256) view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive)",
+  "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
   "function nextStreamId() view returns (uint256)"
 ];
 
@@ -70,8 +70,8 @@ function App() {
   const [streams, setStreams] = useState([]);
   const [activeStreamId, setActiveStreamId] = useState(null);
   const [newStream, setNewStream] = useState({
-    receiver: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    deposit: "100",
+    receiver: "",
+    deposit: "",
     rate: "0.1",
     sentry: "0x15d34aaf54f6577393b74d6a22e18517860d268a"
   });
@@ -211,28 +211,30 @@ function App() {
       
       let fetchedStreams = [];
       for (let i = 1; i <= totalStreams; i++) {
-        const s = await streamerContract.streams(i);
-        const sender = s[0].toLowerCase();
-        const receiver = s[1].toLowerCase();
+        const s = await streamerContract.getStream(i);
+        const sender = s.sender.toLowerCase();
         const currentUser = account.toLowerCase();
         
-        if (sender === currentUser || receiver === currentUser) {
+        // Check if current user is the sender or one of the receivers in the split array
+        const isReceiver = s.receivers.some(r => r.toLowerCase() === currentUser);
+        
+        if (sender === currentUser || isReceiver) {
           fetchedStreams.push({
             id: i,
-            sender: s[0],
-            receiver: s[1],
+            sender: s.sender,
+            receiver: s.receivers[0], // Display the primary AI provider address in the UI
             tokenName: "USDT",
-            deposit: parseFloat(ethers.formatUnits(s[3], 6)),
-            ratePerSecond: parseFloat(ethers.formatUnits(s[4], 6)),
-            startTime: Number(s[5]) * 1000,
-            stopTime: Number(s[6]) * 1000,
-            withdrawn: parseFloat(ethers.formatUnits(s[9], 6)),
-            isPaused: s[12],
-            isDisputed: s[13],
-            isActive: s[14],
-            sentryNode: s[11],
-            accruedAtLastUpdate: parseFloat(ethers.formatUnits(s[8], 6)),
-            lastUpdateTime: Number(s[10]) * 1000
+            deposit: parseFloat(ethers.formatUnits(s.deposit, 6)),
+            ratePerSecond: parseFloat(ethers.formatUnits(s.ratePerSecond, 6)),
+            startTime: Number(s.startTime) * 1000,
+            stopTime: Number(s.stopTime) * 1000,
+            withdrawn: parseFloat(ethers.formatUnits(s.withdrawnAmount, 6)),
+            isPaused: s.isPaused,
+            isDisputed: s.isDisputed,
+            isActive: s.isActive,
+            sentryNode: s.sentryNode,
+            accruedAtLastUpdate: parseFloat(ethers.formatUnits(s.accruedUntilLastUpdate, 6)),
+            lastUpdateTime: Number(s.lastUpdateTime) * 1000
           });
         }
       }
