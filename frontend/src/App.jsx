@@ -36,7 +36,8 @@ const STREAMER_ABI = [
   "function resolveDispute(uint256 streamId, bool refundUser)",
   "function getAccrued(uint256 streamId) view returns (uint256)",
   "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
-  "function nextStreamId() view returns (uint256)"
+  "function nextStreamId() view returns (uint256)",
+  "function daoContract() view returns (address)"
 ];
 
 const DAO_ABI = [
@@ -594,22 +595,40 @@ function App() {
   // Feature 4: DAO Resolve Dispute
   const handleResolveDispute = async (id, refundUser) => {
     if (!provider) return;
+    
+    // Resolve DAO address if not loaded
+    let currentDaoAddr = daoAddr;
     try {
-      setLoading(true);
-      // For the demo, we will just simulate the DAO contract call locally since deploying and wiring the DAO 
-      // address properly requires backend indexing.
-      addSentryLog("INFO", `Submitting DAO Vote: ${refundUser ? 'REFUND' : 'RESUME'}...`);
-      await new Promise(r => setTimeout(r, 1500)); // Simulate transaction
-      addSentryLog("INFO", `Quorum reached. Resolution executed!`);
-      
-      if (refundUser) {
-        setStreams(streams.map(s => s.id === id ? { ...s, isActive: false, isDisputed: false } : s));
-      } else {
-        setStreams(streams.map(s => s.id === id ? { ...s, isPaused: false, isDisputed: false } : s));
+      if (!currentDaoAddr) {
+        const signer = await provider.getSigner();
+        const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
+        currentDaoAddr = await streamerContract.daoContract();
+        setDaoAddr(currentDaoAddr);
       }
     } catch (err) {
+      console.error("Failed to fetch DAO address from contract:", err);
+      addSentryLog("ERROR", "Failed to resolve DAO contract address.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const signer = await provider.getSigner();
+      const daoContract = new ethers.Contract(currentDaoAddr, DAO_ABI, signer);
+      
+      addSentryLog("INFO", `Submitting DAO Vote: ${refundUser ? 'REFUND' : 'RESUME'}...`);
+      const txVote = await daoContract.vote(id, refundUser);
+      await txVote.wait();
+      
+      addSentryLog("INFO", `Vote registered. Executing resolution on-chain...`);
+      const txExec = await daoContract.executeResolution(id);
+      await txExec.wait();
+      
+      addSentryLog("INFO", `DAO Resolution executed! Dispute resolved on-chain.`);
+      await fetchRealtimeData();
+    } catch (err) {
       console.error(err);
-      addSentryLog("ERROR", `Failed to resolve: ${err.message}`);
+      addSentryLog("ERROR", `DAO Resolution failed: ${err.reason || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -1018,6 +1037,8 @@ function App() {
                     <button 
                       className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
                       onClick={() => toggleStreamPause(currentActiveStream.id)}
+                      disabled={currentActiveStream.isDisputed}
+                      title={currentActiveStream.isDisputed ? "Cannot manually resume a disputed stream. Use the DAO buttons below." : ""}
                     >
                       {currentActiveStream.isPaused ? <Play size={16} /> : <Pause size={16} />}
                       {currentActiveStream.isPaused ? "Resume" : "Pause"}
@@ -1122,13 +1143,22 @@ function App() {
                       </>
                     )}
                     {stream.isActive && stream.isDisputed && dashboardView === "creator" && (
-                      <button 
-                        className="btn" 
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#eab308', color: 'black', border: 'none' }}
-                        onClick={() => handleResolveDispute(stream.id, true)}
-                      >
-                        DAO Resolve (Refund)
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
+                          onClick={() => handleResolveDispute(stream.id, true)}
+                        >
+                          DAO Resolve (Refund)
+                        </button>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#10b981', color: 'white', border: 'none' }}
+                          onClick={() => handleResolveDispute(stream.id, false)}
+                        >
+                          DAO Resolve (Resume)
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
