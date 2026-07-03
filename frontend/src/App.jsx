@@ -1223,8 +1223,8 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '1rem 0 0.5rem 0', textAlign: 'center', fontFamily: 'var(--font-family-mono)' }}>
-                Rate: 1 BOT = 2 USDT
+              <div style={{ textAlign: 'center', margin: '1rem 0', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+                Exchange Rate based on Testnet Liquidity Pool
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading || !swapAmount}>
