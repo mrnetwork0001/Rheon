@@ -204,14 +204,21 @@ function App() {
       // 1. Update balances
       await updateBalances(account, provider);
       
-      // 2. Fetch streams from the blockchain
+      // 2. Fetch streams in parallel from the blockchain
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, provider);
       const nextId = await streamerContract.nextStreamId();
       const totalStreams = Number(nextId) - 1;
       
-      let fetchedStreams = [];
+      const promises = [];
       for (let i = 1; i <= totalStreams; i++) {
-        const s = await streamerContract.getStream(i);
+        promises.push(streamerContract.getStream(i));
+      }
+      const results = await Promise.all(promises);
+      
+      let fetchedStreams = [];
+      for (let i = 0; i < results.length; i++) {
+        const s = results[i];
+        const streamId = i + 1;
         const sender = s.sender.toLowerCase();
         const currentUser = account.toLowerCase();
         
@@ -220,7 +227,7 @@ function App() {
         
         if (sender === currentUser || isReceiver) {
           fetchedStreams.push({
-            id: i,
+            id: streamId,
             sender: s.sender,
             receiver: s.receivers[0], // Display the primary AI provider address in the UI
             tokenName: "USDT",
