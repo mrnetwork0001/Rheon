@@ -309,24 +309,7 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle trigger outage simulation
-  const simulateSentryAction = async (statusType) => {
-    addSentryLog("INFO", `Triggering simulated status: ${statusType}`);
-    try {
-      let endpoint = "/simulate-healthy";
-      if (statusType === "OUTAGE") endpoint = "/simulate-outage";
-      if (statusType === "DISPUTE") endpoint = "/simulate-dispute";
 
-      const res = await fetch(`${SENTRY_API_URL}${endpoint}`, { method: 'POST' });
-      const data = await res.json();
-      setSentryStatus(data.providerStatus);
-
-      // In production, the backend Sentry Node will automatically call pauseStream
-      // on the smart contract when OUTAGE or DISPUTE is triggered.
-    } catch (err) {
-      alert("Sentry Node Server not running. Launch it using `npm start` in the sentry folder to test live API controls.");
-    }
-  };
 
   // Create stream implementation
   const handleCreateStream = async (e) => {
@@ -1375,36 +1358,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Simulation triggers */}
-              <div>
-                <span className="form-label" style={{ marginBottom: '0.5rem' }}>Simulate Network Provider Events</span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-success" 
-                    style={{ fontSize: '0.75rem', padding: '0.5rem' }}
-                    onClick={() => simulateSentryAction("HEALTHY")}
-                  >
-                    Restore Healthy
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-danger" 
-                    style={{ fontSize: '0.75rem', padding: '0.5rem' }}
-                    onClick={() => simulateSentryAction("OUTAGE")}
-                  >
-                    Outage (Auto Pause)
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ fontSize: '0.75rem', padding: '0.5rem', color: 'var(--state-warning)', borderColor: 'var(--state-warning)' }}
-                    onClick={() => simulateSentryAction("DISPUTE")}
-                  >
-                    User Dispute
-                  </button>
-                </div>
-              </div>
 
               {/* Sentry Logs View */}
               <div>

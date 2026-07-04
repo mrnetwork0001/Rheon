@@ -10,6 +10,7 @@ const RPC_URL = process.env.BOTCHAIN_RPC_URL || "https://rpc.botchain.ai";
 const STREAMER_CONTRACT_ADDRESS = process.env.STREAMER_CONTRACT_ADDRESS || "";
 const SENTRY_PRIVATE_KEY = process.env.SENTRY_PRIVATE_KEY || ""; // Private key of the sentry node hot wallet
 const PORT = process.env.SENTRY_PORT ? parseInt(process.env.SENTRY_PORT) : 4000;
+const TARGET_API_HEALTH_URL = process.env.TARGET_API_HEALTH_URL || "https://status.openai.com/api/v2/status.json";
 
 // Minimal ABI of BotFlowStreamer
 const STREAMER_ABI = [
@@ -32,7 +33,7 @@ interface LogEntry {
 }
 
 const logs: LogEntry[] = [];
-let simulatedProviderStatus: "HEALTHY" | "OUTAGE" | "DISPUTE" = "HEALTHY";
+let providerStatus: "HEALTHY" | "OUTAGE" | "DISPUTE" = "HEALTHY";
 const activeMonitoredStreams = new Set<number>();
 
 function addLog(type: LogEntry["type"], message: string) {
@@ -81,9 +82,27 @@ async function startSentryNode() {
       return; // Nothing to check
     }
 
-    addLog("INFO", `Active streams to monitor: ${Array.from(activeMonitoredStreams).join(", ")}. Status: ${simulatedProviderStatus}`);
+    // Real API Polling
+    try {
+      if (TARGET_API_HEALTH_URL) {
+        // Ping the health URL. Timeout or non-200 means outage.
+        const res = await fetch(TARGET_API_HEALTH_URL, { method: "GET", signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+           if (providerStatus !== "HEALTHY") addLog("INFO", "API is back online. Status: HEALTHY");
+           providerStatus = "HEALTHY";
+        } else {
+           if (providerStatus !== "OUTAGE") addLog("WARNING", `API returned ${res.status}. Status: OUTAGE`);
+           providerStatus = "OUTAGE";
+        }
+      }
+    } catch (err: any) {
+      if (providerStatus !== "OUTAGE") addLog("WARNING", `API fetch failed (${err.message}). Status: OUTAGE`);
+      providerStatus = "OUTAGE";
+    }
 
-    if (simulatedProviderStatus !== "HEALTHY") {
+    addLog("INFO", `Active streams to monitor: ${Array.from(activeMonitoredStreams).join(", ")}. Status: ${providerStatus}`);
+
+    if (providerStatus !== "HEALTHY") {
       // Outage or dispute detected! AI Sentry intervenes
       for (const streamId of activeMonitoredStreams) {
         try {
@@ -174,7 +193,7 @@ async function startSentryNode() {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-          providerStatus: simulatedProviderStatus,
+          providerStatus: providerStatus,
           monitoredStreams: Array.from(activeMonitoredStreams),
           sentryAddress: wallet ? wallet.address : "0x0000000000000000000000000000000000000000",
           contractAddress: STREAMER_CONTRACT_ADDRESS
@@ -183,21 +202,6 @@ async function startSentryNode() {
     } else if (pathname === "/logs" && req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(logs));
-    } else if (pathname === "/simulate-outage" && req.method === "POST") {
-      simulatedProviderStatus = "OUTAGE";
-      addLog("WARNING", "Simulation Triggered: Provider Outage started.");
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "success", providerStatus: simulatedProviderStatus }));
-    } else if (pathname === "/simulate-dispute" && req.method === "POST") {
-      simulatedProviderStatus = "DISPUTE";
-      addLog("WARNING", "Simulation Triggered: User Dispute started.");
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "success", providerStatus: simulatedProviderStatus }));
-    } else if (pathname === "/simulate-healthy" && req.method === "POST") {
-      simulatedProviderStatus = "HEALTHY";
-      addLog("INFO", "Simulation Triggered: Provider Restored (Healthy).");
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "success", providerStatus: simulatedProviderStatus }));
     } else if (pathname === "/register" && req.method === "POST") {
       // Manual registration for off-chain or testing streams
       let body = "";
