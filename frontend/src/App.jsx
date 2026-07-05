@@ -1094,10 +1094,6 @@ function App() {
               <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', display: 'block' }}>AI-SHIELDED PAYFI</span>
             </div>
           </div>
-          <button className="btn btn-primary" onClick={() => setView("app")}>
-            Launch App
-            <Zap size={16} />
-          </button>
         </nav>
 
         {/* Hero Section */}
