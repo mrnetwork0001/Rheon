@@ -1,5 +1,8 @@
 # 🌊 BotFlow
 
+[![Watch Demo Video](https://img.shields.io/badge/Watch-Demo_Video-blue?style=for-the-badge)](https://youtu.be/your-video-link-here)
+
+
 **BotFlow** is a premium, AI-shielded micropayment and subscription streaming protocol built to leverage **BOT Chain's** sub-second Layer 1 block times (~0.75s) and near-zero transaction fees. 
 
 It enables users to stream tokens (e.g., $USDT) continuously to AI agents, gaming platforms, and content providers on a strict pay-per-use basis. To guarantee safety and uptime for both parties, a native **AI Sentry Node** monitors service delivery in real time and automatically pauses or adjusts the stream on-chain if a dispute or service outage is detected. 
@@ -103,5 +106,5 @@ Open `http://localhost:3000` in your browser.
 In the dashboard:
 - Create a stream, choose the flow rate, and specify your **Sentry Node Address**.
 - Watch the **Live Flow Ticker** count up by milliseconds.
-- Click **"Simulate Outage"** or **"Trigger Dispute"** in the Sentry panel.
-- The off-chain Sentry Node detects the failure instantly, signs a pause transaction, submits it to BOT Chain, and within **~0.75 seconds**, the stream is paused on-chain, halting token transfers immediately.
+- The off-chain **AI Sentry Node** continually polls your configured `TARGET_API_HEALTH_URL` (e.g. OpenAI's status page).
+- If the provider suffers an outage or the ping times out, the Sentry Node detects the failure instantly, signs a pause transaction, and submits it to BOT Chain. Within **~0.75 seconds**, the stream is automatically paused on-chain, halting token transfers immediately and protecting the user's funds.

@@ -344,11 +344,14 @@ function App() {
 
       const rateWei = ethers.parseUnits(newStream.rate, 6);
       
-      // Phase 1: Revenue Splitting Arrays (Hardcoded 70/20/10 for hackathon demo)
+      // Phase 1: Revenue Splitting Arrays (70/20/10 Split)
+      const devWallet = import.meta.env.VITE_DEV_WALLET || "0x1111111111111111111111111111111111111111";
+      const daoTreasury = import.meta.env.VITE_DAO_TREASURY || "0x2222222222222222222222222222222222222222";
+      
       const receivers = [
         newStream.receiver, 
-        "0x1111111111111111111111111111111111111111", // Dev/Creator Wallet
-        "0x2222222222222222222222222222222222222222"  // DAO Treasury
+        devWallet, 
+        daoTreasury
       ];
       const percentages = [70, 20, 10];
 
