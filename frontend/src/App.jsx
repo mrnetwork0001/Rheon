@@ -96,6 +96,7 @@ function App() {
   // Real-time ticking counter states
   const [tickerAccrued, setTickerAccrued] = useState(0);
   const [tickerClaimable, setTickerClaimable] = useState(0);
+  const [tickerYield, setTickerYield] = useState(0);
   
   // Wallet Loading states
   const [loading, setLoading] = useState(false);
@@ -673,6 +674,11 @@ function App() {
       setTickerAccrued(totalAccrued);
       setTickerClaimable(claimable);
       
+      const elapsedSec = Math.max(0, (Date.now() - activeStr.startTime) / 1000);
+      // Yield at 5% APY on the deposit balance
+      const vaultYield = activeStr.deposit * 0.05 * (elapsedSec / 31536000);
+      setTickerYield(vaultYield);
+      
       tickerIntervalRef.current = requestAnimationFrame(tick);
     };
 
@@ -1098,6 +1104,12 @@ function App() {
                     <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault 5% APY</span>
                   </span>
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.deposit} USDT</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Vault Yield Accrued (5% APY)</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--state-success)', fontWeight: 'bold' }}>
+                    +{tickerYield.toFixed(8)} USDT
+                  </span>
                 </div>
               </div>
             </div>
