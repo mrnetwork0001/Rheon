@@ -55,6 +55,226 @@ const BDEX_ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory amounts)"
 ];
 
+const RheonFlowAnimation = () => {
+  const canvasRef = useRef(null);
+  const [localOutage, setLocalOutage] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const resizeCanvas = () => {
+      if (!canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth || 450;
+      canvas.height = 360;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor(startX, startY, endX, endY, speed, color) {
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
+        this.x = startX;
+        this.y = startY;
+        this.progress = Math.random();
+        this.speed = speed;
+        this.color = color;
+        this.size = Math.random() * 2 + 2;
+      }
+
+      update(outage) {
+        if (outage) {
+          this.size = Math.max(0, this.size - 0.05);
+          return;
+        }
+        this.progress += this.speed;
+        if (this.progress >= 1) {
+          this.progress = 0;
+          this.x = this.startX;
+          this.y = this.startY;
+          this.size = Math.random() * 2 + 2;
+        }
+        
+        const cp1x = this.startX + (this.endX - this.startX) * 0.25;
+        const cp1y = this.startY - 60;
+        const cp2x = this.startX + (this.endX - this.startX) * 0.75;
+        const cp2y = this.endY + 60;
+
+        const t = this.progress;
+        this.x = (1 - t) ** 3 * this.startX + 
+                 3 * (1 - t) ** 2 * t * cp1x + 
+                 3 * (1 - t) * t ** 2 * cp2x + 
+                 t ** 3 * this.endX;
+        this.y = (1 - t) ** 3 * this.startY + 
+                 3 * (1 - t) ** 2 * t * cp1y + 
+                 3 * (1 - t) * t ** 2 * cp2y + 
+                 t ** 3 * this.endY;
+      }
+
+      draw(c) {
+        if (this.size <= 0) return;
+        c.beginPath();
+        c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        c.fillStyle = this.color;
+        c.shadowColor = this.color;
+        c.shadowBlur = 8;
+        c.fill();
+        c.shadowBlur = 0;
+      }
+    }
+
+    const leftNode = { x: 50, y: 180 };
+    const rightNode = { x: 400, y: 180 };
+    const sentryNode = { x: 225, y: 180 };
+
+    const particles = [];
+    const colors = ['#00f2fe', '#4facfe', '#9c27b0', '#ff007a'];
+    
+    for (let i = 0; i < 25; i++) {
+      particles.push(new Particle(
+        leftNode.x, 
+        leftNode.y, 
+        rightNode.x, 
+        rightNode.y, 
+        Math.random() * 0.007 + 0.004, 
+        colors[Math.floor(Math.random() * colors.length)]
+      ));
+    }
+
+    let pulseRadius = 0;
+    
+    const drawCurvePath = (startX, startY, endX, endY, offset) => {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY + offset);
+      const cp1x = startX + (endX - startX) * 0.25;
+      const cp1y = startY - 60 + offset;
+      const cp2x = startX + (endX - startX) * 0.75;
+      const cp2y = endY + 60 + offset;
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY + offset);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      leftNode.x = canvas.width * 0.15;
+      leftNode.y = canvas.height * 0.5;
+      rightNode.x = canvas.width * 0.85;
+      rightNode.y = canvas.height * 0.5;
+      sentryNode.x = canvas.width * 0.5;
+      sentryNode.y = canvas.height * 0.5;
+
+      drawCurvePath(leftNode.x, leftNode.y, rightNode.x, rightNode.y, 0);
+      drawCurvePath(leftNode.x, leftNode.y, rightNode.x, rightNode.y, -12);
+      drawCurvePath(leftNode.x, leftNode.y, rightNode.x, rightNode.y, 12);
+
+      particles.forEach(p => {
+        p.startX = leftNode.x;
+        p.startY = leftNode.y;
+        p.endX = rightNode.x;
+        p.endY = rightNode.y;
+        p.update(localOutage);
+        p.draw(ctx);
+      });
+
+      pulseRadius += 0.4;
+      if (pulseRadius > 35) pulseRadius = 0;
+
+      ctx.beginPath();
+      ctx.arc(sentryNode.x, sentryNode.y, 20 + pulseRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = localOutage ? `rgba(255, 59, 48, ${1 - pulseRadius / 35})` : `rgba(0, 242, 254, ${1 - pulseRadius / 35})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(sentryNode.x, sentryNode.y, 24, 0, Math.PI * 2);
+      ctx.fillStyle = localOutage ? 'rgba(255, 59, 48, 0.2)' : 'rgba(0, 242, 254, 0.1)';
+      ctx.strokeStyle = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.font = 'bold 8px "Space Grotesk", sans-serif';
+      ctx.fillStyle = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(localOutage ? "OUTAGE" : "SENTRY", sentryNode.x, sentryNode.y);
+
+      ctx.beginPath();
+      ctx.arc(leftNode.x, leftNode.y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = '#0d0f1a';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = '8px "Space Grotesk", sans-serif';
+      ctx.fillStyle = '#9aa0b9';
+      ctx.fillText("USER", leftNode.x, leftNode.y);
+
+      ctx.beginPath();
+      ctx.arc(rightNode.x, rightNode.y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = '#0d0f1a';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#9aa0b9';
+      ctx.fillText("AGENT", rightNode.x, rightNode.y);
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [localOutage]);
+
+  const handleCanvasClick = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+    
+    const sentryX = canvas.width * 0.5;
+    const sentryY = canvas.height * 0.5;
+    const dist = Math.sqrt((clickX - sentryX) ** 2 + (clickY - sentryY) ** 2);
+    if (dist < 30) {
+      setLocalOutage(prev => !prev);
+    }
+  };
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      onClick={handleCanvasClick}
+      style={{ 
+        width: '100%', 
+        height: '360px', 
+        background: 'radial-gradient(circle at 50% 50%, rgba(13, 17, 30, 0.6) 0%, rgba(7, 8, 13, 0) 80%)',
+        borderRadius: '1.5rem',
+        border: '1px solid var(--glass-border)',
+        cursor: 'pointer'
+      }} 
+    />
+  );
+};
+
 function App() {
   const [view, setView] = useState("landing");
   const [dashboardView, setDashboardView] = useState("creator");
@@ -899,12 +1119,11 @@ function App() {
                 </a>
               </div>
             </div>
-            <div className="hero-media-right">
-              <img 
-                src="/images/hero_ai_payfi.png" 
-                className="hero-illustration" 
-                alt="Rheon AI PayFi" 
-              />
+            <div className="hero-media-right" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+              <RheonFlowAnimation />
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', textAlign: 'center', display: 'block' }}>
+                💡 Click the central SENTRY node inside the canvas to simulate an outage
+              </span>
             </div>
           </div>
 
