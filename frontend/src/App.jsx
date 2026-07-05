@@ -11,7 +11,11 @@ import {
   DollarSign, 
   Coins, 
   Activity, 
-  AlertTriangle 
+  AlertTriangle,
+  Award,
+  Cpu,
+  Terminal,
+  Landmark
 } from 'lucide-react';
 import { ethers } from 'ethers';
 
@@ -1148,7 +1152,9 @@ function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           CANCELLED / DEPLETED
-                          <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem' }}>🏆 NFT Receipt Minted</span>
+                          <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <Award size={10} /> NFT Receipt Minted
+                          </span>
                         </span>
                         <button 
                           className="btn" 
@@ -1280,16 +1286,22 @@ function App() {
 
               {/* Feature 1 UI: Revenue Splitting Breakdown */}
               <div style={{ marginTop: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '0.5rem', border: '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🤖 AI Provider (Receiver)</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Cpu size={14} style={{ color: 'var(--accent-purple)' }} /> AI Provider (Receiver)
+                  </span>
                   <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>70%</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🛠️ Model Creator Wallet</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Terminal size={14} style={{ color: 'var(--accent-cyan)' }} /> Model Creator Wallet
+                  </span>
                   <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>20%</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🏛️ BOT DAO Treasury</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Landmark size={14} style={{ color: 'var(--state-success)' }} /> Rheon DAO Treasury
+                  </span>
                   <span style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>10%</span>
                 </div>
               </div>
@@ -1533,7 +1545,7 @@ function App() {
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)' }}></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <span style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>RHEON RECEIPT NFT</span>
-                <span style={{ fontSize: '1.25rem' }}>🌊</span>
+                <img src="/rheon_logo.png" alt="Rheon Logo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
               </div>
               
               <div style={{ marginBottom: '1rem' }}>
