@@ -738,7 +738,7 @@ function App() {
         {/* Navigation Bar */}
         <nav className="landing-navbar">
           <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer' }}>
-            <span className="brand-logo">🌊</span>
+            <img src="/rheon_logo.png" alt="Rheon Logo" className="brand-logo" style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }} />
             <div>
               <h2 className="brand-name" style={{ fontSize: '1.5rem' }}>Rheon</h2>
               <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', display: 'block' }}>AI-SHIELDED PAYFI</span>
@@ -891,7 +891,7 @@ function App() {
           <div className="footer-content">
             <div className="footer-brand-section">
               <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer', marginBottom: '1rem' }}>
-                <span className="brand-logo">🌊</span>
+                <img src="/rheon_logo.png" alt="Rheon Logo" className="brand-logo" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '6px' }} />
                 <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
               </div>
               <p className="footer-desc">
@@ -938,7 +938,7 @@ function App() {
     <div className="container">
       <header>
         <div className="brand" onClick={() => setView("landing")} style={{ cursor: "pointer" }}>
-          <span className="brand-logo">🌊</span>
+          <img src="/rheon_logo.png" alt="Rheon Logo" className="brand-logo" style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }} />
           <div>
             <h1 className="brand-name">Rheon</h1>
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)' }}>AI-SHIELDED PAYFI HUB</span>
@@ -1484,7 +1484,7 @@ function App() {
         <div className="footer-content">
           <div className="footer-brand-section">
             <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer', marginBottom: '1rem' }}>
-              <span className="brand-logo">🌊</span>
+              <img src="/rheon_logo.png" alt="Rheon Logo" className="brand-logo" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '6px' }} />
               <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
             </div>
             <p className="footer-desc">
