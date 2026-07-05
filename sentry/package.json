@@ -1,7 +1,7 @@
 {
-  "name": "botflow-sentry",
+  "name": "rheon-sentry",
   "version": "1.0.0",
-  "description": "AI Sentry Node service for BotFlow payment streams",
+  "description": "AI Sentry Node service for Rheon payment streams",
   "main": "dist/monitor.js",
   "scripts": {
     "build": "tsc",

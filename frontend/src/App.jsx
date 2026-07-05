@@ -102,7 +102,7 @@ function App() {
   // Connect MetaMask and enforce BOT Chain Testnet
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert("MetaMask is not installed. Please install it to use BotFlow.");
+      alert("MetaMask is not installed. Please install it to use Rheon.");
       return;
     }
     try {
@@ -138,7 +138,7 @@ function App() {
           }
         } else {
           console.error(switchError);
-          alert("You must switch to the BOT Chain Testnet to use BotFlow.");
+          alert("You must switch to the BOT Chain Testnet to use Rheon.");
           setLoading(false);
           return;
         }
@@ -696,7 +696,7 @@ function App() {
           <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer' }}>
             <span className="brand-logo">🌊</span>
             <div>
-              <h2 className="brand-name" style={{ fontSize: '1.5rem' }}>BotFlow</h2>
+              <h2 className="brand-name" style={{ fontSize: '1.5rem' }}>Rheon</h2>
               <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', display: 'block' }}>AI-SHIELDED PAYFI</span>
             </div>
           </div>
@@ -729,7 +729,7 @@ function App() {
               <img 
                 src="/images/hero_ai_payfi.png" 
                 className="hero-illustration" 
-                alt="BotFlow AI PayFi" 
+                alt="Rheon AI PayFi" 
               />
             </div>
           </div>
@@ -756,7 +756,7 @@ function App() {
           <div className="section-header">
             <h2 className="section-title">Engineered for real-time value transfer</h2>
             <p className="section-subtitle">
-              Leveraging BOT Chain's high-speed L1 capabilities, BotFlow establishes trustless streaming channels.
+              Leveraging BOT Chain's high-speed L1 capabilities, Rheon establishes trustless streaming channels.
             </p>
           </div>
 
@@ -806,7 +806,7 @@ function App() {
         {/* How It Works Section */}
         <section className="workflow-section">
           <div className="section-header">
-            <h2 className="section-title">How BotFlow Works</h2>
+            <h2 className="section-title">How Rheon Works</h2>
             <p className="section-subtitle">A secure PayFi channel in three simple steps.</p>
           </div>
 
@@ -848,7 +848,7 @@ function App() {
             <div className="footer-brand-section">
               <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer', marginBottom: '1rem' }}>
                 <span className="brand-logo">🌊</span>
-                <span className="brand-name" style={{ fontSize: '1.25rem' }}>BotFlow</span>
+                <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
               </div>
               <p className="footer-desc">
                 AI-shielded real-time streaming payments and decentralized dispute resolution on BOT Chain.
@@ -896,7 +896,7 @@ function App() {
         <div className="brand" onClick={() => setView("landing")} style={{ cursor: "pointer" }}>
           <span className="brand-logo">🌊</span>
           <div>
-            <h1 className="brand-name">BotFlow</h1>
+            <h1 className="brand-name">Rheon</h1>
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)' }}>AI-SHIELDED PAYFI HUB</span>
           </div>
         </div>
@@ -1386,7 +1386,7 @@ function App() {
           <div className="footer-brand-section">
             <div className="brand" onClick={() => setView("landing")} style={{ cursor: 'pointer', marginBottom: '1rem' }}>
               <span className="brand-logo">🌊</span>
-              <span className="brand-name" style={{ fontSize: '1.25rem' }}>BotFlow</span>
+              <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
             </div>
             <p className="footer-desc">
               AI-shielded real-time streaming payments and decentralized dispute resolution on BOT Chain.

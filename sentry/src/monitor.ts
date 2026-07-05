@@ -49,7 +49,7 @@ function addLog(type: LogEntry["type"], message: string) {
 }
 
 async function startSentryNode() {
-  addLog("INFO", "Starting BotFlow AI Sentry Node...");
+  addLog("INFO", "Starting Rheon AI Sentry Node...");
   addLog("INFO", `Connecting to BOT Chain RPC: ${RPC_URL}`);
 
   let provider: ethers.JsonRpcProvider;
