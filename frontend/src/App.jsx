@@ -96,6 +96,12 @@ function App() {
   const [selectedReceiptStream, setSelectedReceiptStream] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [latencyHistory, setLatencyHistory] = useState([48, 52, 45, 50, 58, 62, 47, 50, 53, 49]);
+  const [mockStats, setMockStats] = useState({
+    users: 1248,
+    settled: 428950.45,
+    swap: 189400.20,
+    revenue: 2144.75
+  });
 
   // Real-time ticking counter states
   const [tickerAccrued, setTickerAccrued] = useState(0);
@@ -351,6 +357,25 @@ function App() {
     }, 3000);
     return () => clearInterval(interval);
   }, [sentryStatus]);
+
+  useEffect(() => {
+    if (view !== "landing") return;
+    const interval = setInterval(() => {
+      setMockStats(prev => {
+        const settledDiff = Math.random() * 0.15 + 0.05;
+        const swapDiff = Math.random() * 0.10 + 0.02;
+        const nextSettled = prev.settled + settledDiff;
+        const nextSwap = prev.swap + swapDiff;
+        return {
+          users: prev.users + (Math.random() > 0.95 ? 1 : 0),
+          settled: nextSettled,
+          swap: nextSwap,
+          revenue: nextSettled * 0.005
+        };
+      });
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [view]);
 
 
 
@@ -785,16 +810,20 @@ function App() {
           {/* Stats Grid */}
           <div className="stats-grid">
             <div className="stat-item">
-              <span className="stat-val">~0.75s</span>
-              <span className="stat-lbl">Block Speed</span>
+              <span className="stat-val">{mockStats.users}</span>
+              <span className="stat-lbl">Active Users</span>
             </div>
             <div className="stat-item">
-              <span className="stat-val">&lt; $0.0001</span>
-              <span className="stat-lbl">Avg Gas Fee</span>
+              <span className="stat-val">${mockStats.settled.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="stat-lbl">Settled Volume</span>
             </div>
             <div className="stat-item">
-              <span className="stat-val">100%</span>
-              <span className="stat-lbl">Sentry Shielded</span>
+              <span className="stat-val">${mockStats.swap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="stat-lbl">Swap Volume (DEX)</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-val">${mockStats.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="stat-lbl">App Revenue (0.5%)</span>
             </div>
           </div>
         </section>
