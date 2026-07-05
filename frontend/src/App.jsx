@@ -88,6 +88,7 @@ function App() {
   const [sentryLogs, setSentryLogs] = useState([
     { timestamp: new Date().toISOString(), type: "INFO", message: "Sentry dashboard initialized. Waiting for connection..." }
   ]);
+  const [forceOutage, setForceOutage] = useState(false);
 
   // Real-time ticking counter states
   const [tickerAccrued, setTickerAccrued] = useState(0);
@@ -284,6 +285,7 @@ function App() {
       const resStatus = await fetch(`${SENTRY_API_URL}/status`);
       const statusData = await resStatus.json();
       setSentryStatus(statusData.providerStatus);
+      setForceOutage(statusData.forceOutageMode || false);
       if (statusData.sentryAddress) {
         setSentryAddress(statusData.sentryAddress);
       }
@@ -293,6 +295,17 @@ function App() {
       setSentryLogs(logsData);
     } catch (err) {
       // Sentry server offline - keep logs clean but don't crash
+    }
+  };
+
+  const handleToggleForceOutage = async () => {
+    try {
+      const res = await fetch(`${SENTRY_API_URL}/toggle-force-outage`, { method: "POST" });
+      const data = await res.json();
+      setForceOutage(data.forceOutageMode);
+      addSentryLog("WARNING", `Outage Simulation toggled: ${data.forceOutageMode ? "ON" : "OFF"}`);
+    } catch (err) {
+      alert("Failed to connect to Sentry Node. Is it running on port 4000?");
     }
   };
 
@@ -1359,6 +1372,25 @@ function App() {
                   <span className="network-dot" style={{ backgroundColor: sentryStatus === "HEALTHY" ? 'var(--state-success)' : sentryStatus === "OUTAGE" ? 'var(--state-error)' : 'var(--state-warning)' }}></span>
                   {sentryStatus}
                 </div>
+              </div>
+
+              {/* Force Outage Toggle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.8rem 0', padding: '0.6rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.4rem', border: '1px dashed var(--glass-border)' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text)' }}>Simulate Provider Outage</span>
+                  <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Forces Sentry to trigger auto-pause on BOT Chain</span>
+                </div>
+                <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={forceOutage} 
+                    onChange={handleToggleForceOutage}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span className="slider" style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: forceOutage ? 'var(--state-error)' : '#333', transition: '.3s', borderRadius: '20px' }}>
+                    <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: forceOutage ? '22px' : '3px', bottom: '3px', backgroundColor: 'white', transition: '.3s', borderRadius: '50%' }}></span>
+                  </span>
+                </label>
               </div>
 
 

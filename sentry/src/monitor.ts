@@ -34,6 +34,7 @@ interface LogEntry {
 
 const logs: LogEntry[] = [];
 let providerStatus: "HEALTHY" | "OUTAGE" | "DISPUTE" = "HEALTHY";
+let forceOutageMode = false;
 const activeMonitoredStreams = new Set<number>();
 
 function addLog(type: LogEntry["type"], message: string) {
@@ -84,7 +85,9 @@ async function startSentryNode() {
 
     // Real API Polling
     try {
-      if (TARGET_API_HEALTH_URL) {
+      if (forceOutageMode) {
+        providerStatus = "OUTAGE";
+      } else if (TARGET_API_HEALTH_URL) {
         // Ping the health URL. Timeout or non-200 means outage.
         const res = await fetch(TARGET_API_HEALTH_URL, { method: "GET", signal: AbortSignal.timeout(3000) });
         if (res.ok) {
@@ -194,11 +197,20 @@ async function startSentryNode() {
       res.end(
         JSON.stringify({
           providerStatus: providerStatus,
+          forceOutageMode: forceOutageMode,
           monitoredStreams: Array.from(activeMonitoredStreams),
           sentryAddress: wallet ? wallet.address : "0x0000000000000000000000000000000000000000",
           contractAddress: STREAMER_CONTRACT_ADDRESS
         })
       );
+    } else if (pathname === "/toggle-force-outage" && req.method === "POST") {
+      forceOutageMode = !forceOutageMode;
+      addLog("WARNING", `Simulation Override: Outage Force Mode is now ${forceOutageMode ? "ENABLED" : "DISABLED"}`);
+      if (!forceOutageMode) {
+         providerStatus = "HEALTHY";
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "success", forceOutageMode }));
     } else if (pathname === "/logs" && req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(logs));
