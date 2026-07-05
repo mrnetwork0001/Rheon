@@ -91,6 +91,7 @@ function App() {
   const [forceOutage, setForceOutage] = useState(false);
   const [selectedReceiptStream, setSelectedReceiptStream] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [latencyHistory, setLatencyHistory] = useState([48, 52, 45, 50, 58, 62, 47, 50, 53, 49]);
 
   // Real-time ticking counter states
   const [tickerAccrued, setTickerAccrued] = useState(0);
@@ -328,6 +329,23 @@ function App() {
     const interval = setInterval(fetchSentryData, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLatencyHistory(prev => {
+        let nextVal;
+        if (sentryStatus === "OUTAGE") {
+          // Shoot up if outage is triggered
+          nextVal = Math.floor(Math.random() * 500) + 2500;
+        } else {
+          // Normal latency fluctuation
+          nextVal = Math.floor(Math.random() * 20) + 45;
+        }
+        return [...prev.slice(1), nextVal];
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [sentryStatus]);
 
 
 
@@ -1384,9 +1402,30 @@ function App() {
                   <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Sentry Monitor Address</span>
                   <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{sentryAddress}</span>
                 </div>
-                <div className={`sentry-health-tag ${sentryStatus.toLowerCase()}`}>
-                  <span className="network-dot" style={{ backgroundColor: sentryStatus === "HEALTHY" ? 'var(--state-success)' : sentryStatus === "OUTAGE" ? 'var(--state-error)' : 'var(--state-warning)' }}></span>
-                  {sentryStatus}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                  <div className={`sentry-health-tag ${sentryStatus.toLowerCase()}`}>
+                    <span className="network-dot" style={{ backgroundColor: sentryStatus === "HEALTHY" ? 'var(--state-success)' : sentryStatus === "OUTAGE" ? 'var(--state-error)' : 'var(--state-warning)' }}></span>
+                    {sentryStatus}
+                  </div>
+                  {/* Micro Sparkline */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)' }}>
+                      Latency: {latencyHistory[latencyHistory.length - 1]}ms
+                    </span>
+                    <svg width="60" height="15" style={{ overflow: 'visible' }}>
+                      <polyline
+                        fill="none"
+                        stroke={sentryStatus === "HEALTHY" ? 'var(--state-success)' : 'var(--state-error)'}
+                        strokeWidth="1.5"
+                        points={latencyHistory.map((val, i) => {
+                          const x = i * (60 / (latencyHistory.length - 1));
+                          const maxMapped = sentryStatus === "HEALTHY" ? 150 : 3000;
+                          const y = 15 - Math.min((val / maxMapped) * 15, 15);
+                          return `${x},${y}`;
+                        }).join(" ")}
+                      />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
