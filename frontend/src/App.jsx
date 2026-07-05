@@ -97,10 +97,10 @@ function App() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [latencyHistory, setLatencyHistory] = useState([48, 52, 45, 50, 58, 62, 47, 50, 53, 49]);
   const [mockStats, setMockStats] = useState({
-    users: 1248,
-    settled: 428950.45,
-    swap: 189400.20,
-    revenue: 2144.75
+    users: 0,
+    settled: 0,
+    swap: 0,
+    revenue: 0
   });
 
   // Real-time ticking counter states
@@ -365,10 +365,10 @@ function App() {
         uniqueUsers.add(u.toLowerCase());
       }
       
-      // Base values (impressive base + real on-chain updates)
-      const baseUsers = 1248;
-      const baseSettled = 428950.45;
-      const baseSwap = 189400.20;
+      // Base values (0 base to display purely actual contract & local storage data)
+      const baseUsers = 0;
+      const baseSettled = 0;
+      const baseSwap = 0;
       
       const finalUsers = baseUsers + uniqueUsers.size;
       const finalSettled = baseSettled + totalSettled;
@@ -422,24 +422,7 @@ function App() {
     return () => clearInterval(interval);
   }, [sentryStatus]);
 
-  useEffect(() => {
-    if (view !== "landing") return;
-    const interval = setInterval(() => {
-      setMockStats(prev => {
-        const settledDiff = Math.random() * 0.15 + 0.05;
-        const swapDiff = Math.random() * 0.10 + 0.02;
-        const nextSettled = prev.settled + settledDiff;
-        const nextSwap = prev.swap + swapDiff;
-        return {
-          users: prev.users + (Math.random() > 0.95 ? 1 : 0),
-          settled: nextSettled,
-          swap: nextSwap,
-          revenue: nextSettled * 0.005
-        };
-      });
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [view]);
+
 
 
 
