@@ -89,6 +89,8 @@ function App() {
     { timestamp: new Date().toISOString(), type: "INFO", message: "Sentry dashboard initialized. Waiting for connection..." }
   ]);
   const [forceOutage, setForceOutage] = useState(false);
+  const [selectedReceiptStream, setSelectedReceiptStream] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   // Real-time ticking counter states
   const [tickerAccrued, setTickerAccrued] = useState(0);
@@ -307,6 +309,11 @@ function App() {
     } catch (err) {
       alert("Failed to connect to Sentry Node. Is it running on port 4000?");
     }
+  };
+
+  const handleViewReceipt = (stream) => {
+    setSelectedReceiptStream(stream);
+    setShowReceiptModal(true);
   };
 
   const addSentryLog = (type, message) => {
@@ -1108,10 +1115,19 @@ function App() {
                       <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
                     </span>
                     {!stream.isActive && (
-                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                        CANCELLED / DEPLETED
-                        <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem' }}>🏆 NFT Receipt Minted</span>
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          CANCELLED / DEPLETED
+                          <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem' }}>🏆 NFT Receipt Minted</span>
+                        </span>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem', alignSelf: 'flex-start', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid #8b5cf6', color: '#c084fc', cursor: 'pointer' }}
+                          onClick={() => handleViewReceipt(stream)}
+                        >
+                          View Receipt NFT
+                        </button>
+                      </div>
                     )}
                   </div>
                   
@@ -1455,6 +1471,84 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {showReceiptModal && selectedReceiptStream && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="glass-card" style={{ maxWidth: '420px', width: '90%', padding: '2rem', textAlign: 'center', border: '1px solid #8b5cf6', boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)' }}>
+            <h3 style={{ color: '#c084fc', marginBottom: '1.5rem' }}>Rheon Proof-of-Compute Receipt</h3>
+            
+            {/* NFT Card */}
+            <div style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)', borderRadius: '12px', padding: '1.5rem', border: '1px solid rgba(139, 92, 246, 0.3)', boxShadow: '0 8px 32px rgba(139, 92, 246, 0.2)', marginBottom: '1.5rem', textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)' }}></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>RHEON RECEIPT NFT</span>
+                <span style={{ fontSize: '1.25rem' }}>🌊</span>
+              </div>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', display: 'block' }}>Token ID (Stream ID)</span>
+                <span style={{ fontSize: '1.1rem', color: '#fff', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>#{selectedReceiptStream.id}</span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', display: 'block' }}>Compute Work Value</span>
+                <span style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: '800' }}>
+                  {selectedReceiptStream.withdrawn.toFixed(4)} USDT
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', display: 'block' }}>Sender</span>
+                  <span style={{ fontSize: '0.75rem', color: '#fff', fontFamily: 'var(--font-family-mono)' }}>
+                    {selectedReceiptStream.sender.slice(0, 6)}...{selectedReceiptStream.sender.slice(-4)}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', display: 'block' }}>AI Provider</span>
+                  <span style={{ fontSize: '0.75rem', color: '#fff', fontFamily: 'var(--font-family-mono)' }}>
+                    {selectedReceiptStream.receiver.slice(0, 6)}...{selectedReceiptStream.receiver.slice(-4)}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px dashed rgba(139, 92, 246, 0.2)', paddingTop: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.65rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <span style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', display: 'inline-block' }}></span>
+                  VERIFIED ON EXPLORER
+                </span>
+                <span style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-family-mono)' }}>ERC-721 Standard</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+              This ERC-721 Receipt was minted on BOT Chain Testnet upon stream cancellation to verify payment for compute services rendered.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <a 
+                href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedReceiptStream.id}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="btn btn-primary" 
+                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem' }}
+              >
+                View on BohrScan
+              </a>
+              <button 
+                className="btn btn-secondary" 
+                style={{ flex: 1, fontSize: '0.85rem' }} 
+                onClick={() => {
+                  setShowReceiptModal(false);
+                  setSelectedReceiptStream(null);
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
