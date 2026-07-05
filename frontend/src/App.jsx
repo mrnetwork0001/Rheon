@@ -364,15 +364,50 @@ function App() {
       for (const u of localSwapUsers) {
         uniqueUsers.add(u.toLowerCase());
       }
+
+      // Query actual Bohr DEX pair swap events
+      let onchainSwapVolume = 0;
+      try {
+        const routerAddress = bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345";
+        const routerContract = new ethers.Contract(routerAddress, ["function factory() view returns (address)"], tempProvider);
+        const factoryAddr = await routerContract.factory();
+        const factoryContract = new ethers.Contract(factoryAddr, ["function getPair(address, address) view returns (address)"], tempProvider);
+        const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
+        const USDT = usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6";
+        const pairAddr = await factoryContract.getPair(WBOT, USDT);
+        
+        if (pairAddr && pairAddr !== ethers.ZeroAddress) {
+          const pairContract = new ethers.Contract(pairAddr, [
+            "event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)"
+          ], tempProvider);
+          
+          const latestBlock = await tempProvider.getBlockNumber();
+          // Query last 10000 blocks to prevent timeouts
+          const fromBlock = Math.max(0, latestBlock - 10000);
+          const filter = pairContract.filters.Swap();
+          const logs = await pairContract.queryFilter(filter, fromBlock, "latest");
+          
+          const isUSDTToken0 = USDT.toLowerCase() < WBOT.toLowerCase();
+          let totalUSDT = 0n;
+          
+          for (const log of logs) {
+            const { amount0In, amount1In, amount0Out, amount1Out } = log.args;
+            if (isUSDTToken0) {
+              totalUSDT += amount0In + amount0Out;
+            } else {
+              totalUSDT += amount1In + amount1Out;
+            }
+          }
+          
+          onchainSwapVolume = parseFloat(ethers.formatUnits(totalUSDT, 6));
+        }
+      } catch (err) {
+        console.error("Failed to fetch Bohr DEX swap volume:", err);
+      }
       
-      // Base values (0 base to display purely actual contract & local storage data)
-      const baseUsers = 0;
-      const baseSettled = 0;
-      const baseSwap = 0;
-      
-      const finalUsers = baseUsers + uniqueUsers.size;
-      const finalSettled = baseSettled + totalSettled;
-      const finalSwap = baseSwap + localSwapVol;
+      const finalUsers = uniqueUsers.size;
+      const finalSettled = totalSettled;
+      const finalSwap = onchainSwapVolume + localSwapVol;
       const finalRevenue = finalSettled * 0.005;
       
       setMockStats({
