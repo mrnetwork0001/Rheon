@@ -74,9 +74,9 @@ a:hover {
 
 /* --- LAYOUT UTILITIES --- */
 .container {
-  max-width: 100%;
+  max-width: 96%;
   margin: 0 auto;
-  padding: 2rem 3rem;
+  padding: 2rem 1.5rem;
 }
 
 .grid-layout {
