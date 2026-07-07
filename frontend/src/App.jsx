@@ -1366,9 +1366,9 @@ function App() {
           <div className="hero-glow"></div>
           <div className="hero-container">
             <div className="hero-content-left">
-              <h1 className="hero-title">The Real-Time PayFi Protocol for AI Agents</h1>
+              <h1 className="hero-title">Autonomous PayFi for the Agentic Economy</h1>
               <p className="hero-subtitle">
-                Stream micro-payments to AI agents with sub-second finality. Featuring automated revenue splitting, idle deposit yield generation, and a decentralized dispute DAO.
+                Rheon is the real-time value streaming protocol engineered for autonomous AI agents. Stream micro-payments with sub-second finality, automate multi-party splits, and generate non-custodial yield on idle deposits.
               </p>
               <div className="hero-buttons">
                 <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
