@@ -1488,6 +1488,45 @@ function App() {
           </div>
         </section>
 
+        {/* Architecture & Flow Mechanics Documentation */}
+        <section className="workflow-section" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '5rem', marginTop: '3rem' }}>
+          <div className="section-header">
+            <h2 className="section-title">Protocol Architecture & Real-World Flow</h2>
+            <p className="section-subtitle" style={{ maxWidth: '700px' }}>
+              Rheon connects human users, AI providers, and developers using automated PayFi micro-streams. Here is how the economics and architecture coordinate in real-time.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>01 / Core Stream Mechanics</div>
+              <h4 style={{ color: '#fff', fontSize: '1.2rem' }}>70/20/10 Automatic Splits</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                When you stream USDT to an AI Agent, payments are divided every second on-chain: 
+                <strong style={{ color: '#fff' }}> 70% </strong> goes to the server host (AI Provider) for compute power, 
+                <strong style={{ color: '#fff' }}> 20% </strong> goes to the model developer as automated royalties, and 
+                <strong style={{ color: '#fff' }}> 10% </strong> accumulates in the Rheon DAO Treasury.
+              </p>
+            </div>
+
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>02 / Outage Protection</div>
+              <h4 style={{ color: '#fff', fontSize: '1.2rem' }}>VPS Sentry Nodes</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                To prevent paying for dead compute, users host a Sentry Node (watcher script) on their VPS. It constantly pings the AI agent. If the server drops offline, the Sentry pauses your payment stream on-chain instantly, protecting your funds.
+              </p>
+            </div>
+
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>03 / Real-World Integration</div>
+              <h4 style={{ color: '#fff', fontSize: '1.2rem' }}>Pay-As-You-Use PayFi</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                Perfect for <strong style={{ color: '#fff' }}>Autonomous Coding Agents</strong> (pay strictly while writing code), <strong style={{ color: '#fff' }}>DePIN GPU Rendering</strong> (pay per frame rendered), and <strong style={{ color: '#fff' }}>AI APIs</strong> (pay per query, eliminating flat-rate monthly subscriptions).
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Banner */}
         <div className="cta-banner">
           <div className="cta-content">
