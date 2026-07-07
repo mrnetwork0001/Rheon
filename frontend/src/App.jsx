@@ -1495,7 +1495,6 @@ function App() {
             <p className="cta-desc">Experience real-time sub-second on-chain transactions today on BOT Chain.</p>
             <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
               Launch Console
-              <Zap size={18} />
             </button>
           </div>
         </div>
