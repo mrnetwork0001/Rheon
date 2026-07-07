@@ -343,6 +343,29 @@ function App() {
   // Wallet menu dropdown and copy states
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Transaction Status Modal state & helpers
+  const [txModal, setTxModal] = useState({
+    isOpen: false,
+    title: "",
+    status: "signing", // 'signing', 'pending', 'success', 'error'
+    txHash: "",
+    errorMsg: ""
+  });
+
+  const showTxStatus = (title, status, txHash = "", errorMsg = "") => {
+    setTxModal({
+      isOpen: true,
+      title,
+      status,
+      txHash,
+      errorMsg
+    });
+  };
+
+  const closeTxModal = () => {
+    setTxModal(prev => ({ ...prev, isOpen: false }));
+  };
   const walletMenuRef = useRef(null);
 
   const truncateAddress = (addr) => {
@@ -759,6 +782,7 @@ function App() {
     if (!provider) return;
     try {
       setLoading(true);
+      showTxStatus("Create Stream", "signing");
       const signer = await provider.getSigner();
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
       const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
@@ -767,8 +791,11 @@ function App() {
       const amountWei = ethers.parseUnits(newStream.deposit, 6);
       addSentryLog("INFO", "Approving USDT for streaming...");
       const appTx = await tokenContract.approve(streamerAddr, amountWei);
+      showTxStatus("USDT Approval", "pending", appTx.hash);
       await appTx.wait();
+      
       addSentryLog("INFO", "Approval confirmed. Creating stream...");
+      showTxStatus("Create Stream", "signing");
 
       const rateWei = ethers.parseUnits(newStream.rate, 6);
       
@@ -791,23 +818,26 @@ function App() {
         rateWei,
         newStream.sentry
       );
-        addSentryLog("INFO", `Stream transaction sent: ${tx.hash}`);
-        const receipt = await tx.wait();
-        addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
-        
-        // Sync real-time data from blockchain instead of local mock state
-        await fetchRealtimeData();
-        await fetchGlobalStats();
-         
-        // Find the newest stream to set as active
-        const nextId = await streamerContract.nextStreamId();
-        setActiveStreamId(Number(nextId) - 1);
-      } catch (error) {
-        console.error(error);
-        addSentryLog("ERROR", `Failed to create stream: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
+      addSentryLog("INFO", `Stream transaction sent: ${tx.hash}`);
+      showTxStatus("Create Stream", "pending", tx.hash);
+      const receipt = await tx.wait();
+      addSentryLog("INFO", `Stream successfully created in block ${receipt.blockNumber}!`);
+      showTxStatus("Create Stream", "success", tx.hash);
+      
+      // Sync real-time data from blockchain instead of local mock state
+      await fetchRealtimeData();
+      await fetchGlobalStats();
+       
+      // Find the newest stream to set as active
+      const nextId = await streamerContract.nextStreamId();
+      setActiveStreamId(Number(nextId) - 1);
+    } catch (error) {
+      console.error(error);
+      addSentryLog("ERROR", `Failed to create stream: ${error.message}`);
+      showTxStatus("Create Stream", "error", "", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Perform Swap Web3 implementation
@@ -828,6 +858,7 @@ function App() {
     if (!provider) return;
     try {
       setLoading(true);
+      showTxStatus("Swap Tokens", "signing");
       const signer = await provider.getSigner();
       const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, signer);
       
@@ -847,7 +878,9 @@ function App() {
           deadline,
           { value: valueWei }
         );
+        showTxStatus("Swap BOT for USDT", "pending", tx.hash);
         await tx.wait();
+        showTxStatus("Swap BOT for USDT", "success", tx.hash);
         addSentryLog("INFO", "BOT to USDT Swap completed successfully.");
       } else {
         addSentryLog("INFO", `Swapping ${amount} USDT to BOT...`);
@@ -858,8 +891,10 @@ function App() {
         // Approve BDEX Router
         addSentryLog("INFO", "Approving USDT for swap...");
         const appTx = await tokenContract.approve(bdexAddr, usdtWei);
+        showTxStatus("USDT Approval", "pending", appTx.hash);
         await appTx.wait();
         
+        showTxStatus("Swap USDT for BOT", "signing");
         const tx = await bdexContract.swapExactTokensForETH(
           usdtWei,
           0, // amountOutMin
@@ -867,7 +902,9 @@ function App() {
           account,
           deadline
         );
+        showTxStatus("Swap USDT for BOT", "pending", tx.hash);
         await tx.wait();
+        showTxStatus("Swap USDT for BOT", "success", tx.hash);
         addSentryLog("INFO", "USDT to BOT Swap completed successfully.");
       }
       // Log local swap stats to localStorage
@@ -892,6 +929,7 @@ function App() {
     } catch (error) {
       console.error(error);
       addSentryLog("ERROR", `Swap failed: ${error.message}`);
+      showTxStatus("Swap Tokens", "error", "", error.message);
     } finally {
       setLoading(false);
     }
@@ -922,24 +960,30 @@ function App() {
       const str = streams.find(s => s.id === id);
       if (!str) return;
       
+      showTxStatus(str.isPaused ? "Resume Stream" : "Pause Stream", "signing");
       const signer = await provider.getSigner();
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
       
       if (str.isPaused) {
         addSentryLog("INFO", `Resuming stream ${id}...`);
         const tx = await streamerContract.resumeStream(id);
+        showTxStatus("Resume Stream", "pending", tx.hash);
         await tx.wait();
+        showTxStatus("Resume Stream", "success", tx.hash);
         addSentryLog("INFO", `Stream ${id} resumed.`);
       } else {
         addSentryLog("INFO", `Pausing stream ${id}...`);
         const tx = await streamerContract.pauseStream(id);
+        showTxStatus("Pause Stream", "pending", tx.hash);
         await tx.wait();
+        showTxStatus("Pause Stream", "success", tx.hash);
         addSentryLog("INFO", `Stream ${id} paused.`);
       }
       await updateBalances(account, provider);
     } catch (err) {
       console.error(err);
       addSentryLog("ERROR", `Failed to toggle pause: ${err.message}`);
+      showTxStatus("Toggle Pause", "error", "", err.message);
     } finally {
       setLoading(false);
     }
@@ -960,13 +1004,16 @@ function App() {
         return;
       }
       
+      showTxStatus("Withdraw Yield", "signing");
       const signer = await provider.getSigner();
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
       
       addSentryLog("INFO", `Withdrawing from stream ${id}...`);
       const claimableWei = ethers.parseUnits(claimable.toFixed(6), 6);
       const tx = await streamerContract.withdrawFromStream(id, claimableWei);
+      showTxStatus("Withdraw Yield", "pending", tx.hash);
       await tx.wait();
+      showTxStatus("Withdraw Yield", "success", tx.hash);
       addSentryLog("ACTION", `Withdrawn ${claimable.toFixed(4)} USDT from Stream ${id}`);
       
       await updateBalances(account, provider);
@@ -974,6 +1021,7 @@ function App() {
     } catch (err) {
       console.error(err);
       addSentryLog("ERROR", `Failed to withdraw: ${err.message}`);
+      showTxStatus("Withdraw Yield", "error", "", err.message);
     } finally {
       setLoading(false);
     }
@@ -984,12 +1032,15 @@ function App() {
     if (!provider) return;
     try {
       setLoading(true);
+      showTxStatus("Cancel Stream & Mint NFT", "signing");
       const signer = await provider.getSigner();
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
       
       addSentryLog("INFO", `Cancelling stream ${id}...`);
       const tx = await streamerContract.cancelStream(id);
+      showTxStatus("Cancel Stream & Mint NFT", "pending", tx.hash);
       await tx.wait();
+      showTxStatus("Cancel Stream & Mint NFT", "success", tx.hash);
       addSentryLog("INFO", `Stream ${id} cancelled and NFT Receipt Minted!`);
       
       setStreams(streams.map(s => s.id === id ? { ...s, isActive: false } : s));
@@ -998,6 +1049,7 @@ function App() {
     } catch (err) {
       console.error(err);
       addSentryLog("ERROR", `Failed to cancel: ${err.message}`);
+      showTxStatus("Cancel Stream", "error", "", err.message);
     } finally {
       setLoading(false);
     }
@@ -1008,18 +1060,22 @@ function App() {
     if (!provider) return;
     try {
       setLoading(true);
+      showTxStatus("Open Dispute", "signing");
       const signer = await provider.getSigner();
       const streamerContract = new ethers.Contract(streamerAddr, STREAMER_ABI, signer);
       
       addSentryLog("INFO", `Opening dispute for stream ${id}...`);
       const tx = await streamerContract.disputeStream(id);
+      showTxStatus("Open Dispute", "pending", tx.hash);
       await tx.wait();
+      showTxStatus("Open Dispute", "success", tx.hash);
       addSentryLog("INFO", `Stream ${id} disputed and frozen.`);
       
       setStreams(streams.map(s => s.id === id ? { ...s, isPaused: true, isDisputed: true } : s));
     } catch (err) {
       console.error(err);
       addSentryLog("ERROR", `Failed to dispute: ${err.message}`);
+      showTxStatus("Open Dispute", "error", "", err.message);
     } finally {
       setLoading(false);
     }
@@ -1029,6 +1085,7 @@ function App() {
   const handleResolveDispute = async (id, refundUser) => {
     if (!provider) return;
     
+    showTxStatus("Resolve Dispute", "signing");
     // Resolve DAO address if not loaded
     let currentDaoAddr = daoAddr;
     try {
@@ -1041,6 +1098,7 @@ function App() {
     } catch (err) {
       console.error("Failed to fetch DAO address from contract:", err);
       addSentryLog("ERROR", "Failed to resolve DAO contract address.");
+      showTxStatus("Resolve Dispute", "error", "", "Failed to resolve DAO contract address.");
       return;
     }
 
@@ -1051,17 +1109,22 @@ function App() {
       
       addSentryLog("INFO", `Submitting DAO Vote: ${refundUser ? 'REFUND' : 'RESUME'}...`);
       const txVote = await daoContract.vote(id, refundUser);
+      showTxStatus("DAO Vote", "pending", txVote.hash);
       await txVote.wait();
       
       addSentryLog("INFO", `Vote registered. Executing resolution on-chain...`);
+      showTxStatus("Execute DAO Resolution", "signing");
       const txExec = await daoContract.executeResolution(id);
+      showTxStatus("Execute DAO Resolution", "pending", txExec.hash);
       await txExec.wait();
+      showTxStatus("DAO Resolution", "success", txExec.hash);
       
       addSentryLog("INFO", `DAO Resolution executed! Dispute resolved on-chain.`);
       await fetchRealtimeData();
     } catch (err) {
       console.error(err);
       addSentryLog("ERROR", `DAO Resolution failed: ${err.reason || err.message}`);
+      showTxStatus("Resolve Dispute", "error", "", err.reason || err.message);
     } finally {
       setLoading(false);
     }
@@ -2036,6 +2099,97 @@ function App() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {txModal.isOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
+          <div className="glass-card" style={{ maxWidth: '420px', width: '95%', padding: '2rem', textAlign: 'center', border: txModal.status === 'error' ? '1px solid var(--state-error)' : txModal.status === 'success' ? '1px solid var(--state-success)' : '1px solid var(--accent-cyan)', boxShadow: txModal.status === 'error' ? '0 8px 32px rgba(255, 59, 48, 0.15)' : txModal.status === 'success' ? '0 8px 32px rgba(0, 255, 157, 0.15)' : '0 8px 32px rgba(0, 242, 254, 0.15)' }}>
+            <h3 style={{ color: '#fff', marginBottom: '1.5rem', fontFamily: 'var(--font-family-mono)' }}>
+              {txModal.title}
+            </h3>
+
+            {txModal.status === 'signing' && (
+              <div>
+                <div className="network-dot" style={{ width: '40px', height: '40px', margin: '0 auto 1.5rem auto', backgroundColor: 'var(--accent-cyan)', boxShadow: '0 0 15px var(--accent-cyan)' }}></div>
+                <h4 style={{ color: 'var(--accent-cyan)', marginBottom: '0.75rem' }}>Waiting for Wallet Approval</h4>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                  Please confirm the transaction in your MetaMask wallet.
+                </p>
+              </div>
+            )}
+
+            {txModal.status === 'pending' && (
+              <div>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0, 242, 254, 0.1)', borderTop: '3px solid var(--accent-cyan)', borderRadius: '50%', margin: '0 auto 1.5rem auto', animation: 'spin 1s linear infinite' }}></div>
+                <style>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+                <h4 style={{ color: 'var(--accent-cyan)', marginBottom: '0.75rem' }}>Transaction Broadcasting...</h4>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  Waiting for transaction to be mined on Bohr Chain.
+                </p>
+                {txModal.txHash && (
+                  <a 
+                    href={`https://scan.bohr.life/tx/${txModal.txHash}`} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="btn btn-secondary" 
+                    style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: '100%', fontSize: '0.85rem', gap: '0.5rem' }}
+                  >
+                    View on BohrScan Explorer
+                    <ArrowDownUp size={14} />
+                  </a>
+                )}
+              </div>
+            )}
+
+            {txModal.status === 'success' && (
+              <div>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(0, 255, 157, 0.1)', border: '2px solid var(--state-success)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--state-success)' }}>
+                  <ShieldCheck size={24} />
+                </div>
+                <h4 style={{ color: 'var(--state-success)', marginBottom: '0.75rem' }}>Transaction Confirmed!</h4>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  Your transaction has been finalized on-chain.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {txModal.txHash && (
+                    <a 
+                      href={`https://scan.bohr.life/tx/${txModal.txHash}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="btn btn-primary" 
+                      style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem' }}
+                    >
+                      View on Explorer
+                    </a>
+                  )}
+                  <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.85rem' }} onClick={closeTxModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {txModal.status === 'error' && (
+              <div>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255, 59, 48, 0.1)', border: '2px solid var(--state-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--state-error)' }}>
+                  <ShieldAlert size={24} />
+                </div>
+                <h4 style={{ color: 'var(--state-error)', marginBottom: '0.75rem' }}>Transaction Failed</h4>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', wordBreak: 'break-word', maxHeight: '120px', overflowY: 'auto' }}>
+                  {txModal.errorMsg || "An unknown error occurred during transaction execution."}
+                </p>
+                <button className="btn btn-danger" style={{ width: '100%', fontSize: '0.85rem' }} onClick={closeTxModal}>
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
