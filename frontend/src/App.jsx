@@ -88,7 +88,7 @@ const RheonFlowAnimation = () => {
 
     const resizeCanvas = () => {
       if (!canvas.parentElement) return;
-      canvas.width = canvas.parentElement.clientWidth || 450;
+      canvas.width = canvas.parentElement.clientWidth || (window.innerWidth - 32);
       canvas.height = 360;
     };
     resizeCanvas();
@@ -1981,7 +1981,7 @@ function App() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-row-grid">
                 <div className="form-group">
                   <label className="form-label">Initial Deposit ($USDT)</label>
                   <div className="input-container">
