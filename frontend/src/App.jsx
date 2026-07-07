@@ -44,7 +44,8 @@ const STREAMER_ABI = [
   "function getAccrued(uint256 streamId) view returns (uint256)",
   "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
   "function nextStreamId() view returns (uint256)",
-  "function daoContract() view returns (address)"
+  "function daoContract() view returns (address)",
+  "function yieldVault() view returns (address)"
 ];
 
 const DAO_ABI = [
@@ -290,6 +291,8 @@ function App() {
   const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_BDEX_ROUTER_ADDRESS || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
   // Hardcoded for demo: assumes DAO deployed right after Streamer at a nearby nonce
   const [daoAddr, setDaoAddr] = useState("");
+  const [vaultAddr, setVaultAddr] = useState("");
+  const [vaultBalance, setVaultBalance] = useState("0.00");
   // Balance states
   const [botBalance, setBotBalance] = useState("0.0");
   const [usdtBalance, setUsdtBalance] = useState("0.0");
@@ -446,6 +449,8 @@ function App() {
     setUsdtBalance("0.0");
     setStreams([]);
     setActiveStreamId(null);
+    setVaultAddr("");
+    setVaultBalance("0.00");
     addSentryLog("INFO", "Wallet disconnected.");
   };
 
@@ -515,6 +520,26 @@ function App() {
         }
       }
       setStreams(fetchedStreams);
+
+      // Fetch yield vault details on-chain
+      let currentVaultAddr = vaultAddr;
+      if (!currentVaultAddr) {
+        try {
+          currentVaultAddr = await streamerContract.yieldVault();
+          setVaultAddr(currentVaultAddr);
+        } catch (err) {
+          console.error("Failed to fetch yield vault address:", err);
+        }
+      }
+      if (currentVaultAddr) {
+        try {
+          const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, provider);
+          const vaultBal = await tokenContract.balanceOf(currentVaultAddr);
+          setVaultBalance(parseFloat(ethers.formatUnits(vaultBal, 6)).toFixed(2));
+        } catch (err) {
+          console.error("Failed to fetch vault USDT balance:", err);
+        }
+      }
     } catch (e) {
       console.error("Error fetching real-time data:", e);
     }
@@ -1392,15 +1417,25 @@ function App() {
             </span>
           </div>
           <div className="metric-card">
-            <span className="metric-label">DeFi Yield Earned</span>
+            <span className="metric-label">DeFi Vault TVL (On-Chain)</span>
             <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
-              {(
-                streams
-                  .filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive)
-                  .reduce((acc, s) => acc + s.deposit, 0) * 0.05
-              ).toFixed(2)} USDT
+              {vaultBalance} USDT
             </span>
-            <span className="metric-subtext highlight">5% APY in Mock Vault</span>
+            <span className="metric-subtext">
+              {vaultAddr ? (
+                <a 
+                  href={`https://scan.bohr.life/address/${vaultAddr}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="highlight"
+                  style={{ textDecoration: 'underline' }}
+                >
+                  Vault Address: {vaultAddr.substring(0, 6)}...{vaultAddr.substring(vaultAddr.length - 4)}
+                </a>
+              ) : (
+                "Loading Vault Address..."
+              )}
+            </span>
           </div>
         </div>
       )}
@@ -1496,13 +1531,13 @@ function App() {
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    Initial Locked Deposit
-                    <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault 5% APY</span>
+                    Locked Balance in Vault (On-Chain)
+                    <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault Active</span>
                   </span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.deposit} USDT</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.remainingBalance} USDT</span>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Vault Yield Accrued (5% APY)</span>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Vault Yield Accrued (5% APY Target)</span>
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--state-success)', fontWeight: 'bold' }}>
                     +{tickerYield.toFixed(8)} USDT
                   </span>
