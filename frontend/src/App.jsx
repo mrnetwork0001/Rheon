@@ -1772,14 +1772,14 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="details-grid" style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.85rem' }}>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Sender</span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{currentActiveStream.sender}</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)', wordBreak: 'break-all' }}>{currentActiveStream.sender}</span>
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Receiver (AI Agent/Provider)</span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{currentActiveStream.receiver}</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)', wordBreak: 'break-all' }}>{currentActiveStream.receiver}</span>
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Flow Rate</span>
@@ -2169,7 +2169,7 @@ function App() {
             </p>
 
             {/* Pool Statistics */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div className="form-row-grid" style={{ marginBottom: '1.5rem' }}>
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
                 <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>TOTAL DEPOSITS</span>
                 <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>{poolDeposits} USDT</span>
@@ -2291,7 +2291,7 @@ function App() {
               <div className="sentry-status-header">
                 <div>
                   <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-family-mono)' }}>Sentry Monitor Address</span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{sentryAddress}</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-muted)', wordBreak: 'break-all' }}>{sentryAddress}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
                   <div className={`sentry-health-tag ${sentryStatus.toLowerCase()}`}>
