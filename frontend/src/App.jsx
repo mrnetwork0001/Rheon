@@ -344,6 +344,11 @@ function App() {
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Stream Detail Modal state & pagination
+  const [selectedDetailStream, setSelectedDetailStream] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [outgoingPage, setOutgoingPage] = useState(1);
+
   // Transaction Status Modal state & helpers
   const [txModal, setTxModal] = useState({
     isOpen: false,
@@ -1615,95 +1620,156 @@ function App() {
               <Coins size={20} className="text-cyan" />
               {dashboardView === "creator" ? "Your Outgoing Streams" : "Your Incoming Streams"}
             </h3>
-            
-            <div className="stream-list">
-              {streams
-                .filter(s => 
+                      <div className="stream-list">
+              {(() => {
+                const filtered = streams.filter(s => 
                   dashboardView === "creator" 
                     ? s.sender.toLowerCase() === account.toLowerCase() 
                     : s.sender.toLowerCase() !== account.toLowerCase()
-                )
-                .map(stream => (
-                <div 
-                  key={stream.id} 
-                  className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
-                  onClick={() => stream.isActive && setActiveStreamId(stream.id)}
-                  style={{ cursor: stream.isActive ? 'pointer' : 'default' }}
-                >
-                  <div className="stream-info">
-                    <span className="stream-party">
-                      {dashboardView === "creator" ? `Stream #${stream.id} to AI Agent` : `Stream #${stream.id} from Creator`}
-                    </span>
-                    <span className="stream-meta">
-                      <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
-                      <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
-                    </span>
-                    {!stream.isActive && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          CANCELLED / DEPLETED
-                          <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Award size={10} /> NFT Receipt Minted
-                          </span>
-                        </span>
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem', alignSelf: 'flex-start', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid #8b5cf6', color: '#c084fc', cursor: 'pointer' }}
-                          onClick={() => handleViewReceipt(stream)}
-                        >
-                          View Receipt NFT
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                );
+                
+                if (dashboardView === "creator") {
+                  const itemsPerPage = 5;
+                  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+                  const startIndex = (outgoingPage - 1) * itemsPerPage;
+                  const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
                   
-                  <div className="stream-action-group" onClick={e => e.stopPropagation()}>
-                    {stream.isActive && !stream.isDisputed && dashboardView === "creator" && (
-                      <>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                          onClick={() => toggleStreamPause(stream.id)}
+                  return (
+                    <>
+                      {paginated.map(stream => (
+                        <div 
+                          key={stream.id} 
+                          className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
+                          onClick={() => {
+                            setSelectedDetailStream(stream);
+                            setShowDetailModal(true);
+                            if (stream.isActive) {
+                              setActiveStreamId(stream.id);
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
                         >
-                          {stream.isPaused ? "Resume" : "Pause"}
-                        </button>
-                        <button 
-                          className="btn btn-danger" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                          onClick={() => handleCancelStream(stream.id)}
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
-                          onClick={() => handleDisputeStream(stream.id)}
-                        >
-                          Dispute
-                        </button>
-                      </>
-                    )}
-                    {stream.isActive && stream.isDisputed && dashboardView === "creator" && (
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
-                          onClick={() => handleResolveDispute(stream.id, true)}
-                        >
-                          DAO Resolve (Refund)
-                        </button>
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#10b981', color: 'white', border: 'none' }}
-                          onClick={() => handleResolveDispute(stream.id, false)}
-                        >
-                          DAO Resolve (Resume)
-                        </button>
+                          <div className="stream-info">
+                            <span className="stream-party">
+                              Stream #{stream.id} to AI Agent
+                            </span>
+                            <span className="stream-meta">
+                              <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
+                              <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {totalPages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            disabled={outgoingPage === 1}
+                            onClick={() => setOutgoingPage(prev => Math.max(prev - 1, 1))}
+                          >
+                            Previous
+                          </button>
+                          <span style={{ display: 'flex', alignItems: 'center', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                            Page {outgoingPage} of {totalPages}
+                          </span>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            disabled={outgoingPage === totalPages}
+                            onClick={() => setOutgoingPage(prev => Math.min(prev + 1, totalPages))}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                } else {
+                  return filtered.map(stream => (
+                    <div 
+                      key={stream.id} 
+                      className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
+                      onClick={() => stream.isActive && setActiveStreamId(stream.id)}
+                      style={{ cursor: stream.isActive ? 'pointer' : 'default' }}
+                    >
+                      <div className="stream-info">
+                        <span className="stream-party">
+                          Stream #{stream.id} from Creator
+                        </span>
+                        <span className="stream-meta">
+                          <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
+                          <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
+                        </span>
+                        {!stream.isActive && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              CANCELLED / DEPLETED
+                              <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <Award size={10} /> NFT Receipt Minted
+                              </span>
+                            </span>
+                            <button 
+                              className="btn" 
+                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem', alignSelf: 'flex-start', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid #8b5cf6', color: '#c084fc', cursor: 'pointer' }}
+                              onClick={() => handleViewReceipt(stream)}
+                            >
+                              View Receipt NFT
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      
+                      <div className="stream-action-group" onClick={e => e.stopPropagation()}>
+                        {stream.isActive && !stream.isDisputed && dashboardView === "creator" && (
+                          <>
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => toggleStreamPause(stream.id)}
+                            >
+                              {stream.isPaused ? "Resume" : "Pause"}
+                            </button>
+                            <button 
+                              className="btn btn-danger" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleCancelStream(stream.id)}
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              className="btn" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
+                              onClick={() => handleDisputeStream(stream.id)}
+                            >
+                              Dispute
+                            </button>
+                          </>
+                        )}
+                        {stream.isActive && stream.isDisputed && dashboardView === "creator" && (
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button 
+                              className="btn" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#ef4444', color: 'white', border: 'none' }}
+                              onClick={() => handleResolveDispute(stream.id, true)}
+                            >
+                              DAO Resolve (Refund)
+                            </button>
+                            <button 
+                              className="btn" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: '#10b981', color: 'white', border: 'none' }}
+                              onClick={() => handleResolveDispute(stream.id, false)}
+                            >
+                              DAO Resolve (Resume)
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ));
+                }
+              })()}
             </div>
           </div>
 
@@ -2190,6 +2256,145 @@ function App() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showDetailModal && selectedDetailStream && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1050 }}>
+          <div style={{ background: '#e8e4dc', maxWidth: '460px', width: '92%', padding: '2rem', borderRadius: '24px', textAlign: 'center', color: '#2a2520', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '1px solid #d4cfc5', animation: 'walletFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)', position: 'relative' }}>
+            <button 
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: '#8c847a', cursor: 'pointer', fontSize: '1.5rem', fontWeight: 'bold' }} 
+              onClick={() => { setShowDetailModal(false); setSelectedDetailStream(null); }}
+            >
+              ×
+            </button>
+
+            {/* Receipt Icon */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(92, 86, 79, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a2520' }}>
+                <Activity size={32} />
+              </div>
+            </div>
+
+            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '0.25rem', fontFamily: 'var(--font-family-sans)' }}>Rheon PayFi Stream Receipt</h2>
+            <span style={{ fontSize: '0.8rem', color: '#8c847a', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '1.5rem' }}>BOT Chain Settlement Verified</span>
+
+            {/* Cream Card Container */}
+            <div style={{ background: '#f4ede4', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e3dbd0', textAlign: 'left', marginBottom: '1.25rem' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #ebe2d5', paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Payment Type:</span>
+                <span style={{ fontSize: '0.85rem', color: '#ea580c', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  📖 Pay-Per-Second Stream
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Amount (Initial Deposit):</span>
+                <span style={{ fontSize: '1.25rem', color: '#ea580c', fontWeight: '800', fontFamily: 'var(--font-family-mono)' }}>
+                  ${selectedDetailStream.deposit.toFixed(2)} USDT
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Date & Time Started:</span>
+                <span style={{ fontSize: '0.85rem', color: '#2a2520', fontWeight: '600', fontFamily: 'var(--font-family-mono)' }}>
+                  {new Date(selectedDetailStream.startTime).toLocaleString()}
+                </span>
+              </div>
+
+              {/* Payer Agent Address */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Payer Agent Address</span>
+                <div style={{ background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6' }}>
+                  {selectedDetailStream.sender}
+                </div>
+              </div>
+
+              {/* Recipient Agent Address */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Recipient AI Agent Address</span>
+                <div style={{ background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6' }}>
+                  {selectedDetailStream.receiver}
+                </div>
+              </div>
+
+              {/* Sentry Node Address */}
+              <div style={{ position: 'relative' }}>
+                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Sentry Node Address</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ flex: 1, background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6', display: 'flex', alignItems: 'center' }}>
+                    {selectedDetailStream.sentryNode}
+                  </div>
+                  <button 
+                    style={{ background: '#fff', border: '1px solid #decab6', borderRadius: '8px', padding: '0 0.75rem', fontSize: '0.75rem', color: '#5c564f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedDetailStream.sentryNode);
+                      alert("Sentry address copied!");
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div style={{ background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)', borderRadius: '12px', padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.75rem', color: '#78350f', lineHeight: '1.4', marginBottom: '1.5rem' }}>
+              💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to Mock DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second on-chain.
+            </div>
+
+            {/* Actions for active stream */}
+            {selectedDetailStream.isActive && (
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <button 
+                  className="btn"
+                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', background: '#fff', border: '1px solid #decab6', color: '#2a2520' }}
+                  onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
+                >
+                  {selectedDetailStream.isPaused ? "Resume" : "Pause"}
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                  onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                >
+                  Cancel Stream
+                </button>
+                <button 
+                  className="btn"
+                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', border: '1px solid var(--state-warning)', color: 'var(--state-warning)', background: 'transparent' }}
+                  onClick={() => { handleDisputeStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                >
+                  Dispute
+                </button>
+              </div>
+            )}
+
+            {/* Bottom main action buttons */}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                className="btn" 
+                style={{ flex: 1, fontSize: '0.85rem', borderRadius: '50px', border: '1px solid #bdafa2', background: 'transparent', color: '#5c564f', height: '44px' }} 
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedDetailStream(null);
+                }}
+              >
+                Close
+              </button>
+              <a 
+                href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedDetailStream.id}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="btn" 
+                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem', borderRadius: '50px', background: '#ea580c', color: '#fff', border: 'none', height: '44px', fontWeight: 'bold' }}
+              >
+                Verify on BohrScan ↗
+              </a>
+            </div>
+
           </div>
         </div>
       )}
