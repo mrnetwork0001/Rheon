@@ -1,21 +1,21 @@
 /* --- DESIGN SYSTEM & CSS VARIABLES --- */
 :root {
-  --bg-primary: #07080d;
-  --bg-secondary: #0d0f1a;
-  --glass-bg: rgba(13, 17, 30, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-glow: rgba(0, 242, 254, 0.15);
+  --bg-primary: #000000;
+  --bg-secondary: #0a0c10;
+  --glass-bg: rgba(10, 12, 16, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-glow: rgba(0, 204, 153, 0.08);
   
-  --color-text-primary: #f1f3fa;
-  --color-text-secondary: #9aa0b9;
-  --color-text-muted: #646b85;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ea3b0;
+  --color-text-muted: #5e6475;
   
-  --accent-cyan: #00f2fe;
-  --accent-blue: #4facfe;
-  --accent-purple: #9c27b0;
-  --accent-pink: #ff007a;
+  --accent-cyan: #00cc99;      /* Mint Green */
+  --accent-blue: #00b386;      /* Medium Mint */
+  --accent-purple: #004d3d;    /* Deep Emerald */
+  --accent-pink: #00ffcc;      /* Bright Neon Mint */
   
-  --state-success: #00ff9d;
+  --state-success: #00ffaa;
   --state-warning: #ffb300;
   --state-error: #ff3b30;
   
@@ -37,9 +37,9 @@
 body {
   background-color: var(--bg-primary);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(79, 172, 254, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(156, 39, 176, 0.07) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(7, 8, 13, 1) 0%, rgba(7, 8, 13, 0.8) 100%);
+    radial-gradient(circle at 10% 20%, rgba(0, 204, 153, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(0, 77, 61, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, #000000 0%, #000000 100%);
   background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-family-sans);
@@ -258,8 +258,8 @@ header {
   background: transparent;
   color: var(--color-text-primary);
   border: 1px solid var(--glass-border);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1.75rem;
+  border-radius: 50px; /* Capsule buttons like the BOT Chain official site */
   font-family: var(--font-family-mono);
   font-size: 0.95rem;
   font-weight: 600;
@@ -269,24 +269,26 @@ header {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
-  color: #07080d;
+  background: var(--accent-cyan);
+  color: #000000;
   border: none;
-  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 204, 153, 0.25);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 204, 153, 0.45);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .btn-danger {
@@ -303,16 +305,16 @@ header {
 }
 
 .btn-success {
-  background: rgba(0, 255, 157, 0.1);
-  border-color: rgba(0, 255, 157, 0.25);
+  background: rgba(0, 204, 153, 0.1);
+  border-color: rgba(0, 204, 153, 0.25);
   color: var(--state-success);
 }
 
 .btn-success:hover {
   background: var(--state-success);
-  color: #07080d;
+  color: #000;
   border-color: var(--state-success);
-  box-shadow: 0 4px 15px rgba(0, 255, 157, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 204, 153, 0.3);
 }
 
 .btn-connect {
@@ -322,9 +324,9 @@ header {
 }
 
 .btn-connect:hover {
-  background: rgba(0, 242, 254, 0.05);
+  background: rgba(0, 204, 153, 0.05);
   border-style: solid;
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+  box-shadow: 0 0 15px rgba(0, 204, 153, 0.2);
 }
 
 .btn:disabled {

@@ -152,7 +152,7 @@ const RheonFlowAnimation = () => {
     const sentryNode = { x: 225, y: 180 };
 
     const particles = [];
-    const colors = ['#00f2fe', '#4facfe', '#9c27b0', '#ff007a'];
+    const colors = ['#00cc99', '#00ffcc', '#009973', '#ffffff'];
     
     for (let i = 0; i < 25; i++) {
       particles.push(new Particle(
@@ -208,23 +208,23 @@ const RheonFlowAnimation = () => {
 
       ctx.beginPath();
       ctx.arc(sentryNode.x, sentryNode.y, 20 + pulseRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = localOutage ? `rgba(255, 59, 48, ${1 - pulseRadius / 35})` : `rgba(0, 242, 254, ${1 - pulseRadius / 35})`;
+      ctx.strokeStyle = localOutage ? `rgba(255, 59, 48, ${1 - pulseRadius / 35})` : `rgba(0, 204, 153, ${1 - pulseRadius / 35})`;
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.beginPath();
       ctx.arc(sentryNode.x, sentryNode.y, 24, 0, Math.PI * 2);
-      ctx.fillStyle = localOutage ? 'rgba(255, 59, 48, 0.2)' : 'rgba(0, 242, 254, 0.1)';
-      ctx.strokeStyle = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.fillStyle = localOutage ? 'rgba(255, 59, 48, 0.2)' : 'rgba(0, 204, 153, 0.1)';
+      ctx.strokeStyle = localOutage ? '#ff3b30' : '#00cc99';
       ctx.lineWidth = 2;
-      ctx.shadowColor = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.shadowColor = localOutage ? '#ff3b30' : '#00cc99';
       ctx.shadowBlur = 12;
       ctx.fill();
       ctx.stroke();
       ctx.shadowBlur = 0;
 
       ctx.font = 'bold 8px "Space Grotesk", sans-serif';
-      ctx.fillStyle = localOutage ? '#ff3b30' : '#00f2fe';
+      ctx.fillStyle = localOutage ? '#ff3b30' : '#00cc99';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(localOutage ? "OUTAGE" : "SENTRY", sentryNode.x, sentryNode.y);
