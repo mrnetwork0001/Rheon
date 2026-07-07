@@ -1884,11 +1884,12 @@ function App() {
                     >
                       <div className="stream-info">
                         <span className="stream-party">
-                          Stream #{stream.id} from Creator
+                          Stream #{stream.id} {dashboardView === "creator" ? "to Agent" : "from Creator"}
                         </span>
                         <span className="stream-meta">
                           <span>Rate: <span className="stream-rate">{stream.ratePerSecond} USDT/sec</span></span>
                           <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
+                          <span>Started: <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{new Date(stream.startTime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></span>
                         </span>
                         {!stream.isActive && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
