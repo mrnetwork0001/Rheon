@@ -2261,10 +2261,10 @@ function App() {
       )}
 
       {showDetailModal && selectedDetailStream && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1050 }}>
-          <div style={{ background: '#e8e4dc', maxWidth: '460px', width: '92%', padding: '2rem', borderRadius: '24px', textAlign: 'center', color: '#2a2520', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '1px solid #d4cfc5', animation: 'walletFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1050 }}>
+          <div className="glass-card" style={{ maxWidth: '460px', width: '92%', padding: '2rem', borderRadius: '24px', textAlign: 'center', color: 'var(--color-text-primary)', border: '1px solid var(--glass-border)', boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0, 242, 254, 0.1)', animation: 'walletFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)', position: 'relative' }}>
             <button 
-              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: '#8c847a', cursor: 'pointer', fontSize: '1.5rem', fontWeight: 'bold' }} 
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '1.5rem', fontWeight: 'bold' }} 
               onClick={() => { setShowDetailModal(false); setSelectedDetailStream(null); }}
             >
               ×
@@ -2272,63 +2272,64 @@ function App() {
 
             {/* Receipt Icon */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(92, 86, 79, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a2520' }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-cyan)' }}>
                 <Activity size={32} />
               </div>
             </div>
 
-            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '0.25rem', fontFamily: 'var(--font-family-sans)' }}>Rheon PayFi Stream Receipt</h2>
-            <span style={{ fontSize: '0.8rem', color: '#8c847a', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '1.5rem' }}>BOT Chain Settlement Verified</span>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '0.25rem', fontFamily: 'var(--font-family-mono)', color: '#fff' }}>Rheon PayFi Stream Receipt</h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '1.5rem' }}>BOT Chain Settlement Verified</span>
 
-            {/* Cream Card Container */}
-            <div style={{ background: '#f4ede4', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e3dbd0', textAlign: 'left', marginBottom: '1.25rem' }}>
+            {/* Dark Card Container */}
+            <div style={{ background: 'rgba(7, 8, 13, 0.5)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--glass-border)', textAlign: 'left', marginBottom: '1.25rem' }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #ebe2d5', paddingBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Payment Type:</span>
-                <span style={{ fontSize: '0.85rem', color: '#ea580c', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>Payment Type:</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   📖 Pay-Per-Second Stream
                 </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Amount (Initial Deposit):</span>
-                <span style={{ fontSize: '1.25rem', color: '#ea580c', fontWeight: '800', fontFamily: 'var(--font-family-mono)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>Amount (Initial Deposit):</span>
+                <span style={{ fontSize: '1.25rem', color: 'var(--accent-cyan)', fontWeight: '800', fontFamily: 'var(--font-family-mono)' }}>
                   ${selectedDetailStream.deposit.toFixed(2)} USDT
                 </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#5c564f', fontWeight: '500' }}>Date & Time Started:</span>
-                <span style={{ fontSize: '0.85rem', color: '#2a2520', fontWeight: '600', fontFamily: 'var(--font-family-mono)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>Date & Time Started:</span>
+                <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: '600', fontFamily: 'var(--font-family-mono)' }}>
                   {new Date(selectedDetailStream.startTime).toLocaleString()}
                 </span>
               </div>
 
               {/* Payer Agent Address */}
               <div style={{ marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Payer Agent Address</span>
-                <div style={{ background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Payer Agent Address</span>
+                <div style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)' }}>
                   {selectedDetailStream.sender}
                 </div>
               </div>
 
               {/* Recipient Agent Address */}
               <div style={{ marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Recipient AI Agent Address</span>
-                <div style={{ background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Recipient AI Agent Address</span>
+                <div style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)' }}>
                   {selectedDetailStream.receiver}
                 </div>
               </div>
 
               {/* Sentry Node Address */}
               <div style={{ position: 'relative' }}>
-                <span style={{ fontSize: '0.75rem', color: '#5c564f', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Sentry Node Address</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Sentry Node Address</span>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <div style={{ flex: 1, background: '#ebe2d5', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#2a2520', wordBreak: 'break-all', border: '1px solid #decab6', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ flex: 1, background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center' }}>
                     {selectedDetailStream.sentryNode}
                   </div>
                   <button 
-                    style={{ background: '#fff', border: '1px solid #decab6', borderRadius: '8px', padding: '0 0.75rem', fontSize: '0.75rem', color: '#5c564f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold' }}
+                    className="btn btn-secondary"
+                    style={{ padding: '0 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold', height: 'auto' }}
                     onClick={() => {
                       navigator.clipboard.writeText(selectedDetailStream.sentryNode);
                       alert("Sentry address copied!");
@@ -2341,7 +2342,7 @@ function App() {
             </div>
 
             {/* Info Box */}
-            <div style={{ background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)', borderRadius: '12px', padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.75rem', color: '#78350f', lineHeight: '1.4', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'rgba(0, 242, 254, 0.03)', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: '1.4', marginBottom: '1.5rem' }}>
               💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to Mock DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second on-chain.
             </div>
 
@@ -2349,8 +2350,8 @@ function App() {
             {selectedDetailStream.isActive && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <button 
-                  className="btn"
-                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', background: '#fff', border: '1px solid #decab6', color: '#2a2520' }}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
                   onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
                 >
                   {selectedDetailStream.isPaused ? "Resume" : "Pause"}
@@ -2375,8 +2376,8 @@ function App() {
             {/* Bottom main action buttons */}
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button 
-                className="btn" 
-                style={{ flex: 1, fontSize: '0.85rem', borderRadius: '50px', border: '1px solid #bdafa2', background: 'transparent', color: '#5c564f', height: '44px' }} 
+                className="btn btn-secondary" 
+                style={{ flex: 1, fontSize: '0.85rem', borderRadius: '50px', height: '44px' }} 
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedDetailStream(null);
@@ -2388,8 +2389,8 @@ function App() {
                 href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedDetailStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="btn" 
-                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem', borderRadius: '50px', background: '#ea580c', color: '#fff', border: 'none', height: '44px', fontWeight: 'bold' }}
+                className="btn btn-primary" 
+                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem', borderRadius: '50px', height: '44px', fontWeight: 'bold' }}
               >
                 Verify on BohrScan ↗
               </a>
