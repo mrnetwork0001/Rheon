@@ -18,7 +18,9 @@ import {
   Landmark,
   Copy,
   LogOut,
-  Check
+  Check,
+  Menu,
+  X
 } from 'lucide-react';
 import { ethers } from 'ethers';
 
@@ -375,6 +377,7 @@ function App() {
     healthFactor: "0"
   });
   const [borrowInput, setBorrowInput] = useState("");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Transaction Status Modal state & helpers
   const [txModal, setTxModal] = useState({
@@ -1596,13 +1599,22 @@ function App() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        {/* Mobile Hamburger Button */}
+        <button 
+          className="mobile-hamburger-btn" 
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          aria-label="Toggle Menu"
+        >
+          {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div className={`nav-actions-container ${showMobileMenu ? 'mobile-open' : ''}`}>
           <div className="network-badge">
             <span className="network-dot"></span>
             {network}
           </div>
           {!account ? (
-            <button className="btn btn-connect" onClick={connectWallet} disabled={loading}>
+            <button className="btn btn-connect" onClick={() => { connectWallet(); setShowMobileMenu(false); }} disabled={loading}>
               <Zap size={16} />
               Connect BOT Wallet
             </button>
@@ -1617,7 +1629,7 @@ function App() {
                     {copied ? <Check size={14} style={{ color: 'var(--state-success)' }} /> : <Copy size={14} />}
                     {copied ? "Copied!" : "Copy Address"}
                   </button>
-                  <button className="wallet-dropdown-item disconnect" onClick={() => { disconnectWallet(); setShowWalletMenu(false); }}>
+                  <button className="wallet-dropdown-item disconnect" onClick={() => { disconnectWallet(); setShowWalletMenu(false); setShowMobileMenu(false); }}>
                     <LogOut size={14} />
                     Disconnect
                   </button>
