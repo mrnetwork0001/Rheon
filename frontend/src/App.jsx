@@ -15,7 +15,10 @@ import {
   Award,
   Cpu,
   Terminal,
-  Landmark
+  Landmark,
+  Copy,
+  LogOut,
+  Check
 } from 'lucide-react';
 import { ethers } from 'ethers';
 
@@ -333,6 +336,36 @@ function App() {
   
   // Refs
   const tickerIntervalRef = useRef(null);
+
+  // Wallet menu dropdown and copy states
+  const [showWalletMenu, setShowWalletMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const walletMenuRef = useRef(null);
+
+  const truncateAddress = (addr) => {
+    if (!addr) return "";
+    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+  };
+
+  const handleCopyAddress = () => {
+    if (account) {
+      navigator.clipboard.writeText(account);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (walletMenuRef.current && !walletMenuRef.current.contains(event.target)) {
+        setShowWalletMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Connect MetaMask and enforce BOT Chain Testnet
   const connectWallet = async () => {
@@ -1305,9 +1338,23 @@ function App() {
               Connect BOT Wallet
             </button>
           ) : (
-            <button className="btn btn-secondary" onClick={disconnectWallet}>
-              Disconnect
-            </button>
+            <div className="wallet-container" ref={walletMenuRef}>
+              <button className="btn btn-secondary" onClick={() => setShowWalletMenu(!showWalletMenu)}>
+                {truncateAddress(account)}
+              </button>
+              {showWalletMenu && (
+                <div className="wallet-dropdown">
+                  <button className="wallet-dropdown-item" onClick={handleCopyAddress}>
+                    {copied ? <Check size={14} style={{ color: 'var(--state-success)' }} /> : <Copy size={14} />}
+                    {copied ? "Copied!" : "Copy Address"}
+                  </button>
+                  <button className="wallet-dropdown-item disconnect" onClick={() => { disconnectWallet(); setShowWalletMenu(false); }}>
+                    <LogOut size={14} />
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </header>
