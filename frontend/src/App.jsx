@@ -53,6 +53,21 @@ const DAO_ABI = [
   "function executeResolution(uint256 streamId)"
 ];
 
+const YIELD_POOL_ABI = [
+  "function totalDeposits() view returns (uint256)",
+  "function totalBorrows() view returns (uint256)",
+  "function priceOracle() view returns (address)",
+  "function borrows(address) view returns (uint256 principal, uint256 collateral, uint256 borrowTime)",
+  "function getDebt(address) view returns (uint256)",
+  "function isLiquidatable(address) view returns (bool)",
+  "function borrow(address token, uint256 amount) payable",
+  "function repay(address token, uint256 amount)"
+];
+
+const ORACLE_ABI = [
+  "function botPrice() view returns (uint256)"
+];
+
 const BDEX_ABI = [
   "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable returns (uint[] memory amounts)",
   "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) returns (uint[] memory amounts)",
@@ -349,6 +364,18 @@ function App() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [outgoingPage, setOutgoingPage] = useState(1);
 
+  // Yield & Lending Pool states
+  const [poolDeposits, setPoolDeposits] = useState("0.00");
+  const [poolBorrows, setPoolBorrows] = useState("0.00");
+  const [botPrice, setBotPrice] = useState("1.00");
+  const [userBorrow, setUserBorrow] = useState({
+    principal: "0.00",
+    collateral: "0.00",
+    currentDebt: "0.00",
+    healthFactor: "0"
+  });
+  const [borrowInput, setBorrowInput] = useState("");
+
   // Transaction Status Modal state & helpers
   const [txModal, setTxModal] = useState({
     isOpen: false,
@@ -561,11 +588,51 @@ function App() {
       }
       if (currentVaultAddr) {
         try {
-          const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, provider);
-          const vaultBal = await tokenContract.balanceOf(currentVaultAddr);
-          setVaultBalance(parseFloat(ethers.formatUnits(vaultBal, 6)).toFixed(2));
+          const poolContract = new ethers.Contract(currentVaultAddr, YIELD_POOL_ABI, provider);
+          
+          // Query pool deposits & borrows
+          const totalDep = await poolContract.totalDeposits();
+          const totalBor = await poolContract.totalBorrows();
+          
+          setPoolDeposits(parseFloat(ethers.formatUnits(totalDep, 6)).toFixed(2));
+          setPoolBorrows(parseFloat(ethers.formatUnits(totalBor, 6)).toFixed(2));
+          setVaultBalance(parseFloat(ethers.formatUnits(totalDep, 6)).toFixed(2)); // Backwards compatibility
+          
+          // Query price oracle price
+          const oracleAddr = await poolContract.priceOracle();
+          const oracleContract = new ethers.Contract(oracleAddr, ORACLE_ABI, provider);
+          const price = await oracleContract.botPrice();
+          const priceFormatted = (parseFloat(price) / 1000000).toFixed(2);
+          setBotPrice(priceFormatted);
+
+          // Query user borrow receipt
+          const receipt = await poolContract.borrows(account);
+          const principalVal = parseFloat(ethers.formatUnits(receipt.principal, 6));
+          if (principalVal > 0) {
+            const debt = await poolContract.getDebt(account);
+            const collateralVal = parseFloat(ethers.formatEther(receipt.collateral));
+            const debtVal = parseFloat(ethers.formatUnits(debt, 6));
+            
+            // Health Factor = (collateralVal * botPrice) / debtVal * 100
+            const collateralUsdt = collateralVal * parseFloat(priceFormatted);
+            const health = debtVal > 0 ? ((collateralUsdt / debtVal) * 100).toFixed(0) : "0";
+
+            setUserBorrow({
+              principal: principalVal.toFixed(2),
+              collateral: collateralVal.toFixed(4),
+              currentDebt: debtVal.toFixed(4),
+              healthFactor: health
+            });
+          } else {
+            setUserBorrow({
+              principal: "0.00",
+              collateral: "0.00",
+              currentDebt: "0.00",
+              healthFactor: "0"
+            });
+          }
         } catch (err) {
-          console.error("Failed to fetch vault USDT balance:", err);
+          console.error("Failed to fetch lending pool stats:", err);
         }
       }
     } catch (e) {
@@ -935,6 +1002,78 @@ function App() {
       console.error(error);
       addSentryLog("ERROR", `Swap failed: ${error.message}`);
       showTxStatus("Swap Tokens", "error", "", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Execute Borrow USDT
+  const handleBorrow = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(borrowInput);
+    if (isNaN(amount) || amount <= 0) return;
+
+    if (!provider || !vaultAddr) return;
+    try {
+      setLoading(true);
+      showTxStatus("Borrow USDT", "signing");
+      const signer = await provider.getSigner();
+      const poolContract = new ethers.Contract(vaultAddr, YIELD_POOL_ABI, signer);
+
+      // Estimate required BOT collateral
+      // requiredCollateralUsdt = amount * 1.5
+      // requiredCollateralBot = requiredCollateralUsdt / botPrice
+      const collateralVal = (amount * 1.5) / parseFloat(botPrice);
+      const collateralWei = ethers.parseEther(collateralVal.toFixed(18));
+      const usdtWei = ethers.parseUnits(borrowInput, 6);
+      
+      console.log(`Borrowing ${amount} USDT with ${collateralVal} BOT collateral...`);
+      const tx = await poolContract.borrow(usdtAddr, usdtWei, { value: collateralWei });
+      showTxStatus("Borrow USDT", "pending", tx.hash);
+      await tx.wait();
+      showTxStatus("Borrow USDT", "success", tx.hash);
+      
+      setBorrowInput("");
+      await fetchRealtimeData();
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Borrow failed: ${err.message}`);
+      showTxStatus("Borrow USDT", "error", "", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Execute Repay Borrow
+  const handleRepay = async (e) => {
+    e.preventDefault();
+    if (!provider || !vaultAddr) return;
+    try {
+      setLoading(true);
+      showTxStatus("Repay Loan", "signing");
+      const signer = await provider.getSigner();
+      const poolContract = new ethers.Contract(vaultAddr, YIELD_POOL_ABI, signer);
+      const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
+
+      const debt = await poolContract.getDebt(account);
+      
+      // Approve USDT spending
+      addSentryLog("INFO", "Approving USDT for loan repayment...");
+      const appTx = await tokenContract.approve(vaultAddr, debt);
+      showTxStatus("USDT Approval", "pending", appTx.hash);
+      await appTx.wait();
+
+      showTxStatus("Repay Loan", "signing");
+      const tx = await poolContract.repay(usdtAddr, debt);
+      showTxStatus("Repay Loan", "pending", tx.hash);
+      await tx.wait();
+      showTxStatus("Repay Loan", "success", tx.hash);
+      
+      await fetchRealtimeData();
+    } catch (err) {
+      console.error(err);
+      addSentryLog("ERROR", `Repayment failed: ${err.message}`);
+      showTxStatus("Repay Loan", "error", "", err.message);
     } finally {
       setLoading(false);
     }
@@ -1967,6 +2106,129 @@ function App() {
                 Swap Assets
               </button>
             </form>
+          </div>
+
+          {/* Rheon Yield & Lending Pool Console */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Landmark size={20} className="text-cyan" />
+              Rheon Yield & Lending Pool
+            </h3>
+            
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+              Locked deposits generate interest dynamically. Lock native <strong>$BOT</strong> to borrow <strong>$USDT</strong> at a fixed 10% APR with 150% collateral coverage.
+            </p>
+
+            {/* Pool Statistics */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>TOTAL DEPOSITS</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>{poolDeposits} USDT</span>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>TOTAL BORROWS</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-pink)' }}>{poolBorrows} USDT</span>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>UTILIZATION RATE</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#fff' }}>
+                  {((parseFloat(poolBorrows) / (parseFloat(poolDeposits) || 1)) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>BOT ORACLE PRICE</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--state-success)' }}>${botPrice}</span>
+              </div>
+            </div>
+
+            {parseFloat(userBorrow.principal) === 0 ? (
+              /* Borrow Form */
+              <form onSubmit={handleBorrow}>
+                <div className="form-group">
+                  <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Amount to Borrow</span>
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Max Liquidity: {(parseFloat(poolDeposits) - parseFloat(poolBorrows)).toFixed(2)} USDT</span>
+                  </label>
+                  <div className="input-container">
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      placeholder="0.00"
+                      value={borrowInput}
+                      onChange={e => setBorrowInput(e.target.value)}
+                      required
+                    />
+                    <span className="input-suffix">USDT</span>
+                  </div>
+                </div>
+
+                {borrowInput && parseFloat(borrowInput) > 0 && (
+                  <div style={{ background: 'rgba(0, 242, 254, 0.05)', border: '1px solid rgba(0, 242, 254, 0.15)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.4' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span>Required Collateral:</span>
+                      <strong style={{ color: 'var(--accent-cyan)' }}>
+                        {((parseFloat(borrowInput) * 1.5) / parseFloat(botPrice)).toFixed(4)} BOT
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Interest Rate:</span>
+                      <strong>10.0% APR</strong>
+                    </div>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ width: '100%' }}
+                  disabled={loading || !borrowInput || (parseFloat(borrowInput) > (parseFloat(poolDeposits) - parseFloat(poolBorrows)))}
+                >
+                  <Zap size={16} />
+                  Borrow USDT
+                </button>
+              </form>
+            ) : (
+              /* Active Borrow Info & Repay */
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', padding: '1rem', borderRadius: '12px' }}>
+                <h4 style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.75rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
+                  Your Active Loan
+                </h4>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Borrowed Principal:</span>
+                  <span style={{ color: '#fff', fontFamily: 'var(--font-family-mono)' }}>{userBorrow.principal} USDT</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Current Total Debt (+Int):</span>
+                  <span style={{ color: 'var(--accent-pink)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>{userBorrow.currentDebt} USDT</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Locked Collateral:</span>
+                  <span style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>{userBorrow.collateral} BOT</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Collateral Health:</span>
+                  <span className={`sentry-health-tag ${parseInt(userBorrow.healthFactor) > 130 ? 'healthy' : 'outage'}`} style={{ fontSize: '0.75rem' }}>
+                    {userBorrow.healthFactor}%
+                  </span>
+                </div>
+
+                {parseInt(userBorrow.healthFactor) <= 125 && (
+                  <div style={{ background: 'rgba(255, 59, 48, 0.08)', border: '1px solid rgba(255, 59, 48, 0.2)', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--state-error)', marginBottom: '1rem', lineHeight: '1.3' }}>
+                    ⚠️ <strong>Warning:</strong> Collateral value is close to the 120% liquidation threshold. Repay immediately to avoid losing your BOT tokens.
+                  </div>
+                )}
+
+                <button 
+                  onClick={handleRepay} 
+                  className="btn btn-danger" 
+                  style={{ width: '100%' }}
+                  disabled={loading || parseFloat(usdtBalance) < parseFloat(userBorrow.currentDebt)}
+                >
+                  Repay Loan & Unlock Collateral
+                </button>
+              </div>
+            )}
           </div>
 
           {/* AI Sentry Node Status Panel */}

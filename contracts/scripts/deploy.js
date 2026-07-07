@@ -13,9 +13,19 @@ async function main() {
   const streamerAddress = await streamer.getAddress();
   console.log("BotFlowStreamer deployed to:", streamerAddress);
 
+  // Retrieve addresses of internally deployed contracts
+  const receiptAddress = await streamer.receiptNFT();
+  const oracleAddress = await streamer.priceOracle();
+  const poolAddress = await streamer.yieldVault();
+  const daoAddress = await streamer.daoContract();
+
   console.log("\nDeployment completed successfully!");
   console.log("-----------------------------------");
   console.log("BotFlowStreamer:", streamerAddress);
+  console.log("BotFlowReceipt (NFT):", receiptAddress);
+  console.log("RheonPriceOracle:", oracleAddress);
+  console.log("RheonYieldPool:", poolAddress);
+  console.log("BotFlowDAO:", daoAddress);
   console.log("-----------------------------------");
 }
 

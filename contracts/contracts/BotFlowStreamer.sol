@@ -5,7 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./BotFlowReceipt.sol";
-import "./MockYieldVault.sol";
+import "./RheonPriceOracle.sol";
+import "./RheonYieldPool.sol";
 import "./BotFlowDAO.sol";
 
 contract BotFlowStreamer is ReentrancyGuard {
@@ -33,12 +34,16 @@ contract BotFlowStreamer is ReentrancyGuard {
     uint256 public nextStreamId = 1;
     mapping(uint256 => Stream) public streams;
     BotFlowReceipt public receiptNFT;
-    MockYieldVault public yieldVault;
+    RheonYieldPool public yieldVault;
+    RheonPriceOracle public priceOracle;
     BotFlowDAO public daoContract;
 
     constructor() {
         receiptNFT = new BotFlowReceipt(address(this));
-        yieldVault = new MockYieldVault();
+        // Deploy price oracle with $1.00 initial BOT price (6 decimals)
+        priceOracle = new RheonPriceOracle(1000000);
+        // Deploy yield pool pointing to the oracle
+        yieldVault = new RheonYieldPool(address(priceOracle));
         daoContract = new BotFlowDAO(address(this));
     }
 
