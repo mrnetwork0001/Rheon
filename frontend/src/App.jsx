@@ -1373,7 +1373,6 @@ function App() {
               <div className="hero-buttons">
                 <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
                   Launch Console
-                  <Zap size={18} />
                 </button>
                 <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg">
                   Explore Codebase
