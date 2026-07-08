@@ -906,7 +906,10 @@ function App() {
         const logs = await routerContract.queryFilter(filter, 1, "latest");
         
         for (const log of logs) {
-          const { tokenIn, tokenOut, amountIn, amountOut } = log.args;
+          const { user, tokenIn, tokenOut, amountIn, amountOut } = log.args;
+          if (user) {
+            uniqueUsers.add(user.toLowerCase());
+          }
           const USDT = usdtAddr.toLowerCase();
           if (tokenIn.toLowerCase() === USDT) {
             onchainSwapVolume += parseFloat(ethers.formatUnits(amountIn, 6));
