@@ -1590,7 +1590,6 @@ function App() {
                 <h4>ECOSYSTEM</h4>
                 <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
                 <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
-                <a href="#">DAO Treasury</a>
                 <a href="#">DeFi Yield Vaults</a>
               </div>
               <div className="footer-col">
@@ -2814,7 +2813,6 @@ function App() {
               <h4>ECOSYSTEM</h4>
               <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
               <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
-              <a href="#">DAO Treasury</a>
               <a href="#">DeFi Yield Vaults</a>
             </div>
             <div className="footer-col">
