@@ -2772,7 +2772,7 @@ function App() {
                         <span style={{ fontWeight: 'bold', color: '#fff' }}>BotFlowStreamer (Core Escrow):</span>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText(streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204");
+                            navigator.clipboard.writeText(streamerAddr || "0x4070a987c938a18ceA469e61c4c12eaC600625f0");
                             showToast("BotFlowStreamer address copied!", "success");
                           }}
                           style={{
@@ -2795,7 +2795,7 @@ function App() {
                         </button>
                       </div>
                       <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
-                        {streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204"}
+                        {streamerAddr || "0x4070a987c938a18ceA469e61c4c12eaC600625f0"}
                       </code>
                     </li>
 
@@ -2804,7 +2804,7 @@ function App() {
                         <span style={{ fontWeight: 'bold', color: '#fff' }}>BotFlowReceipt (ERC-721 NFT):</span>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText(receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9");
+                            navigator.clipboard.writeText(receiptNftAddr || "0x7177f6c14afFf6E8D1b6331FE8Ab3009057084D7");
                             showToast("BotFlowReceipt NFT address copied!", "success");
                           }}
                           style={{
@@ -2827,17 +2827,17 @@ function App() {
                         </button>
                       </div>
                       <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
-                        {receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9"}
+                        {receiptNftAddr || "0x7177f6c14afFf6E8D1b6331FE8Ab3009057084D7"}
                       </code>
                     </li>
 
                     <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Mock USDT Token:</span>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Tether USD (USDT) Token:</span>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText(usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6");
-                            showToast("Mock USDT address copied!", "success");
+                            navigator.clipboard.writeText(usdtAddr || "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C");
+                            showToast("USDT address copied!", "success");
                           }}
                           style={{
                             background: 'rgba(255, 255, 255, 0.02)',
@@ -2859,7 +2859,7 @@ function App() {
                         </button>
                       </div>
                       <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
-                        {usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6"}
+                        {usdtAddr || "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C"}
                       </code>
                     </li>
 
@@ -2868,7 +2868,7 @@ function App() {
                         <span style={{ fontWeight: 'bold', color: '#fff' }}>BOTChain DEX Router:</span>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText(bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
+                            navigator.clipboard.writeText(bdexAddr || "0x1414eD29FdFD322c3c0a830330ed982E2D629e76");
                             showToast("BOTChain DEX Router address copied!", "success");
                           }}
                           style={{
@@ -2891,7 +2891,7 @@ function App() {
                         </button>
                       </div>
                       <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
-                        {bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345"}
+                        {bdexAddr || "0x1414eD29FdFD322c3c0a830330ed982E2D629e76"}
                       </code>
                     </li>
 
