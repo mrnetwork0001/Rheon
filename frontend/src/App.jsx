@@ -1920,7 +1920,7 @@ function App() {
                   </p>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
-                  {dashboardView === "creator" && (
+                  {dashboardView === "creator" && currentActiveStream.withdrawn < currentActiveStream.deposit && (
                     <button 
                       className={`btn ${currentActiveStream.isPaused ? 'btn-success' : 'btn-secondary'}`}
                       onClick={() => toggleStreamPause(currentActiveStream.id)}
@@ -1958,9 +1958,15 @@ function App() {
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     Locked Balance in Vault (Onchain)
-                    <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault Active</span>
+                    {currentActiveStream.withdrawn >= currentActiveStream.deposit ? (
+                      <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.08)', color: 'var(--color-text-muted)', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>Fully Settled</span>
+                    ) : (
+                      <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault Active</span>
+                    )}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.remainingBalance} USDT</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>
+                    {currentActiveStream.withdrawn >= currentActiveStream.deposit ? "0.00" : currentActiveStream.remainingBalance} USDT
+                  </span>
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Vault Yield Accrued (5% APY Target)</span>
@@ -3289,7 +3295,7 @@ function App() {
             </div>
 
             {/* Actions for active stream */}
-            {selectedDetailStream.isActive && (
+            {selectedDetailStream.isActive && selectedDetailStream.withdrawn < selectedDetailStream.deposit && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <button 
                   className="btn btn-secondary"
