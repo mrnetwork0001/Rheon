@@ -1433,3 +1433,13 @@ footer {
     gap: 1.5rem;
   }
 }
+
+.copy-btn-hover:hover {
+  background-color: rgba(0, 242, 254, 0.1) !important;
+  color: var(--accent-cyan) !important;
+  border-color: rgba(0, 242, 254, 0.3) !important;
+  transform: translateY(-1px);
+}
+.copy-btn-hover:active {
+  transform: translateY(0);
+}

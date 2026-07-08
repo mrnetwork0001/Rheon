@@ -2551,12 +2551,169 @@ function App() {
                   </table>
 
                   <h3 style={{ color: '#fff', fontSize: '1.2rem', marginTop: '2rem', marginBottom: '0.75rem', fontWeight: 'bold' }}>Deployed Smart Contracts</h3>
-                  <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingLeft: '1.25rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>BotFlowStreamer (Core Escrow):</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204"}</span></li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>BotFlowReceipt (ERC-721 NFT):</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9"}</span></li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Mock USDT Token:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6"}</span></li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Bohr DEX Router:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345"}</span></li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Yield & Lending Vault:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{vaultAddr || "Loading..."}</span></li>
+                  <ul style={{ color: 'var(--color-text-secondary)', paddingLeft: '0', listStyleType: 'none', fontSize: '0.85rem' }}>
+                    
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>BotFlowStreamer (Core Escrow):</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204");
+                            showToast("BotFlowStreamer address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204"}
+                      </code>
+                    </li>
+
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>BotFlowReceipt (ERC-721 NFT):</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9");
+                            showToast("BotFlowReceipt NFT address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9"}
+                      </code>
+                    </li>
+
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Mock USDT Token:</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6");
+                            showToast("Mock USDT address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6"}
+                      </code>
+                    </li>
+
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Bohr DEX Router:</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
+                            showToast("Bohr DEX Router address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345"}
+                      </code>
+                    </li>
+
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Yield & Lending Vault:</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(vaultAddr || "");
+                            showToast("Yield & Lending Vault address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                          disabled={!vaultAddr}
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {vaultAddr || "Loading dynamic pool vault..."}
+                      </code>
+                    </li>
+
                   </ul>
                 </div>
               )}
