@@ -1588,16 +1588,16 @@ function App() {
               </div>
               <div className="footer-col">
                 <h4>ECOSYSTEM</h4>
-                <a href="#">BOT Chain Explorer</a>
-                <a href="#">BOT Wallet</a>
+                <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOT Chain Explorer</a>
+                <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
                 <a href="#">DAO Treasury</a>
                 <a href="#">DeFi Yield Vaults</a>
               </div>
               <div className="footer-col">
                 <h4>RESOURCES</h4>
-                <a href="#">Docs</a>
-                <a href="#">Contracts</a>
-                <a href="#">BDEX Swap</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
+                <a href="https://dex.botchain.ai/" target="_blank" rel="noreferrer">BDEX Swap</a>
               </div>
             </div>
           </div>
@@ -2812,16 +2812,16 @@ function App() {
             </div>
             <div className="footer-col">
               <h4>ECOSYSTEM</h4>
-              <a href="#">BOT Chain Explorer</a>
-              <a href="#">BOT Wallet</a>
+              <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOT Chain Explorer</a>
+              <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
               <a href="#">DAO Treasury</a>
               <a href="#">DeFi Yield Vaults</a>
             </div>
             <div className="footer-col">
               <h4>RESOURCES</h4>
-              <a href="#">Docs</a>
-              <a href="#">Contracts</a>
-              <a href="#">BDEX Swap</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
+              <a href="https://dex.botchain.ai/" target="_blank" rel="noreferrer">BDEX Swap</a>
             </div>
           </div>
         </div>
