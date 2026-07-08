@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-// BOT Chain Network configuration (EVM L1)
+// BOTChain Network configuration (EVM L1)
 const RPC_URL = process.env.BOTCHAIN_RPC_URL || "https://rpc.botchain.ai";
 const STREAMER_CONTRACT_ADDRESS = process.env.STREAMER_CONTRACT_ADDRESS || "";
 const SENTRY_PRIVATE_KEY = process.env.SENTRY_PRIVATE_KEY || ""; // Private key of the sentry node hot wallet
@@ -51,7 +51,7 @@ function addLog(type: LogEntry["type"], message: string) {
 
 async function startSentryNode() {
   addLog("INFO", "Starting Rheon AI Sentry Node...");
-  addLog("INFO", `Connecting to BOT Chain RPC: ${RPC_URL}`);
+  addLog("INFO", `Connecting to BOTChain RPC: ${RPC_URL}`);
 
   let provider: ethers.JsonRpcProvider;
   let wallet: ethers.Wallet | null = null;
@@ -124,13 +124,13 @@ async function startSentryNode() {
             }
 
             if (!isPaused) {
-              addLog("ACTION", `Sending pause transaction for stream ${streamId} to BOT Chain...`);
+              addLog("ACTION", `Sending pause transaction for stream ${streamId} to BOTChain...`);
               
-              // Send transaction with gas optimal parameters for BOT Chain
+              // Send transaction with gas optimal parameters for BOTChain
               const tx = await contract.pauseStream(streamId);
               addLog("INFO", `Intervention transaction submitted. Tx Hash: ${tx.hash}`);
               
-              // Wait for sub-second confirmation on BOT Chain
+              // Wait for sub-second confirmation on BOTChain
               const receipt = await tx.wait();
               addLog("ACTION", `Intervention confirmed in block ${receipt.blockNumber}! Stream ${streamId} paused successfully.`);
             } else {

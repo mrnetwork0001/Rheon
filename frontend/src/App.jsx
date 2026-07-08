@@ -436,7 +436,7 @@ function App() {
     };
   }, []);
 
-  // Connect MetaMask and enforce BOT Chain Testnet
+  // Connect MetaMask and enforce BOTChain Testnet
   const connectWallet = async () => {
     if (!window.ethereum) {
       showToast("MetaMask is not installed. Please install it to use Rheon.", "error");
@@ -461,7 +461,7 @@ function App() {
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: chainIdHex,
-                chainName: 'BOT Chain Testnet',
+                chainName: 'BOTChain Testnet',
                 nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
                 rpcUrls: ['https://rpc.bohr.life'],
                 blockExplorerUrls: ['https://scan.bohr.life/']
@@ -469,13 +469,13 @@ function App() {
             });
           } catch (addError) {
             console.error(addError);
-            showToast("Failed to add BOT Chain Testnet. Please add it manually.", "error");
+            showToast("Failed to add BOTChain Testnet. Please add it manually.", "error");
             setLoading(false);
             return;
           }
         } else {
           console.error(switchError);
-          showToast("You must switch to the BOT Chain Testnet to use Rheon.", "error");
+          showToast("You must switch to the BOTChain Testnet to use Rheon.", "error");
           setLoading(false);
           return;
         }
@@ -486,18 +486,18 @@ function App() {
       const net = await web3Provider.getNetwork();
       
       if (net.chainId !== 968n && net.chainId !== 968 && Number(net.chainId) !== 968) {
-        showToast("Please switch your wallet to BOT Chain Testnet (Chain ID 968) to proceed.", "error");
+        showToast("Please switch your wallet to BOTChain Testnet (Chain ID 968) to proceed.", "error");
         setLoading(false);
         return;
       }
       
       setAccount(accounts[0]);
       setProvider(web3Provider);
-      setNetwork("BOT Chain Testnet");
+      setNetwork("BOTChain Testnet");
       
       // Load balances
       await updateBalances(accounts[0], web3Provider);
-      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on BOT Chain Testnet`);
+      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on BOTChain Testnet`);
     } catch (error) {
       console.error(error);
       addSentryLog("ERROR", `Failed to connect wallet: ${error.message}`);
@@ -1434,7 +1434,7 @@ function App() {
           <div className="section-header">
             <h2 className="section-title">Engineered for real-time value transfer</h2>
             <p className="section-subtitle">
-              Leveraging BOT Chain's high-speed L1 capabilities, Rheon establishes trustless streaming channels.
+              Leveraging BOTChain's high-speed L1 capabilities, Rheon establishes trustless streaming channels.
             </p>
           </div>
 
@@ -1552,7 +1552,7 @@ function App() {
         <div className="cta-banner">
           <div className="cta-content">
             <h2 className="cta-title">Ready to launch your streaming channel?</h2>
-            <p className="cta-desc">Experience real-time sub-second onchain transactions today on BOT Chain.</p>
+            <p className="cta-desc">Experience real-time sub-second onchain transactions today on BOTChain.</p>
             <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
               Launch Console
             </button>
@@ -1567,7 +1567,7 @@ function App() {
                 <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
               </div>
               <p className="footer-desc">
-                AI-shielded real-time streaming payments and decentralized dispute resolution on BOT Chain.
+                AI-shielded real-time streaming payments and decentralized dispute resolution on BOTChain.
               </p>
               <div className="footer-socials">
                 <a href="#" aria-label="X (Twitter)">
@@ -1588,7 +1588,7 @@ function App() {
               </div>
               <div className="footer-col">
                 <h4>ECOSYSTEM</h4>
-                <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOT Chain Explorer</a>
+                <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
                 <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
                 <a href="#">DAO Treasury</a>
                 <a href="#">DeFi Yield Vaults</a>
@@ -2357,7 +2357,7 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.8rem 0', padding: '0.6rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.4rem', border: '1px dashed var(--glass-border)' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text)' }}>Simulate Provider Outage</span>
-                  <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Forces Sentry to trigger auto-pause on BOT Chain</span>
+                  <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Forces Sentry to trigger auto-pause on BOTChain</span>
                 </div>
                 <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
                   <input 
@@ -2792,7 +2792,7 @@ function App() {
               <span className="brand-name" style={{ fontSize: '1.25rem' }}>Rheon</span>
             </div>
             <p className="footer-desc">
-              AI-shielded real-time streaming payments and decentralized dispute resolution on BOT Chain.
+              AI-shielded real-time streaming payments and decentralized dispute resolution on BOTChain.
             </p>
             <div className="footer-socials">
               <a href="#" aria-label="X (Twitter)">
@@ -2812,7 +2812,7 @@ function App() {
             </div>
             <div className="footer-col">
               <h4>ECOSYSTEM</h4>
-              <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOT Chain Explorer</a>
+              <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
               <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
               <a href="#">DAO Treasury</a>
               <a href="#">DeFi Yield Vaults</a>
@@ -2877,7 +2877,7 @@ function App() {
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-              This ERC-721 Receipt was minted on BOT Chain Testnet upon stream cancellation to verify payment for compute services rendered.
+              This ERC-721 Receipt was minted on BOTChain Testnet upon stream cancellation to verify payment for compute services rendered.
             </p>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -3014,7 +3014,7 @@ function App() {
             </div>
 
             <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '0.25rem', fontFamily: 'var(--font-family-mono)', color: '#fff' }}>Rheon PayFi Stream Receipt</h2>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '1.5rem' }}>BOT Chain Settlement Verified</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '1.5rem' }}>BOTChain Settlement Verified</span>
 
             {/* Dark Card Container */}
             <div style={{ background: 'rgba(7, 8, 13, 0.5)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--glass-border)', textAlign: 'left', marginBottom: '1.25rem' }}>
