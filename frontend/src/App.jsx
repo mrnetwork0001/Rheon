@@ -365,6 +365,11 @@ function App() {
   const [selectedDetailStream, setSelectedDetailStream] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [outgoingPage, setOutgoingPage] = useState(1);
+  const [toast, setToast] = useState({ show: false, message: "" });
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => setToast({ show: false, message: "" }), 2500);
+  };
 
   // Yield & Lending Pool states
   const [poolDeposits, setPoolDeposits] = useState("0.00");
@@ -2617,9 +2622,19 @@ function App() {
               </div>
 
               {/* Payer Agent Address */}
+              {/* Payer Agent Address */}
               <div style={{ marginBottom: '0.75rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Payer Agent Address</span>
-                <div style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)' }}>
+                <div 
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedDetailStream.sender);
+                    showToast("Payer address copied to clipboard!");
+                  }}
+                  style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-cyan)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                  title="Click to copy"
+                >
                   {selectedDetailStream.sender}
                 </div>
               </div>
@@ -2627,28 +2642,34 @@ function App() {
               {/* Recipient Agent Address */}
               <div style={{ marginBottom: '0.75rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Recipient AI Agent Address</span>
-                <div style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)' }}>
+                <div 
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedDetailStream.receiver);
+                    showToast("Recipient address copied to clipboard!");
+                  }}
+                  style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-cyan)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                  title="Click to copy"
+                >
                   {selectedDetailStream.receiver}
                 </div>
               </div>
 
               {/* Sentry Node Address */}
-              <div style={{ position: 'relative' }}>
+              <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem', fontWeight: '600' }}>Sentry Node Address</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <div style={{ flex: 1, background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center' }}>
-                    {selectedDetailStream.sentryNode}
-                  </div>
-                  <button 
-                    className="btn btn-secondary"
-                    style={{ padding: '0 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold', height: 'auto' }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(selectedDetailStream.sentryNode);
-                      alert("Sentry address copied!");
-                    }}
-                  >
-                    Copy
-                  </button>
+                <div 
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedDetailStream.sentryNode);
+                    showToast("Sentry address copied to clipboard!");
+                  }}
+                  style={{ background: 'rgba(7, 8, 13, 0.8)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: 'var(--color-text-muted)', wordBreak: 'break-all', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-cyan)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                  title="Click to copy"
+                >
+                  {selectedDetailStream.sentryNode}
                 </div>
               </div>
             </div>
@@ -2709,6 +2730,30 @@ function App() {
             </div>
 
           </div>
+        </div>
+      )}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          background: 'rgba(13, 15, 26, 0.85)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid var(--accent-cyan)',
+          boxShadow: '0 8px 32px rgba(0, 242, 254, 0.25)',
+          padding: '1rem 1.5rem',
+          borderRadius: '12px',
+          color: '#fff',
+          fontFamily: 'var(--font-family-mono)',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          zIndex: 9999,
+          animation: 'fadeInSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <Check size={16} style={{ color: 'var(--state-success)' }} />
+          <span>{toast.message}</span>
         </div>
       )}
     </div>
