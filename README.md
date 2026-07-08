@@ -5,7 +5,7 @@
 <img width="1629" height="959" alt="08 07 2026_07 28 35_REC" src="https://github.com/user-attachments/assets/cd89858a-7d76-410e-946b-c7dc78a1787c" />
 
 
-Designed specifically for the AI, GPU DePIN, and machine-to-machine Web3 Knowledge Economy, Rheon leverages BOTChain’s sub-second block times (~0.75s) and near-zero fees to unlock continuous micropayments with built-in consumer protections, automatic revenue splits, mock DeFi yield generation, and autonomous watchdog overrides.
+Designed specifically for the AI, GPU DePIN, and machine-to-machine Web3 Knowledge Economy, Rheon leverages BOTChain’s sub-second block times (~0.75s) and near-zero fees to unlock continuous micropayments with built-in consumer protections, automatic revenue splits, DeFi yield generation, and autonomous watchdog overrides.
 
 ---
 
@@ -59,29 +59,30 @@ sequenceDiagram
 
 ---
 
-## Deployed Contract Registry (BOTChain Testnet)
+## Deployed Contract Registry (BOTChain Mainnet)
 
-All smart contracts are deployed and verified on the BOTChain block explorer:
+All smart contracts are deployed and verified on the official BOTChain block explorer:
 
 | Contract Name | Address | Explorer Link |
 | :--- | :--- | :--- |
-| **BotFlowStreamer (Core)** | `0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204) |
-| **BotFlowReceipt (ERC-721 NFT)** | `0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9) |
-| **Mock USDT Token** | `0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6) |
-| **BOTChain DEX Router** | `0xD6425a02f0845B8D99e349C34D2E7A576E177345` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xD6425a02f0845B8D99e349C34D2E7A576E177345) |
-| **Yield & Lending Vault** | `0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879) |
+| **BotFlowStreamer (Core)** | `0x4070a987c938a18ceA469e61c4c12eaC600625f0` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0x4070a987c938a18ceA469e61c4c12eaC600625f0) |
+| **BotFlowReceipt (ERC-721 NFT)** | `0x7177f6c14afFf6E8D1b6331FE8Ab3009057084D7` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0x7177f6c14afFf6E8D1b6331FE8Ab3009057084D7) |
+| **Tether USD (USDT)** | `0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C) |
+| **RheonSwapRouter (DeFi Analytics)** | `0x485fcab52e7CAF8f3ae5E124c4f2214eb918c349` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0x485fcab52e7CAF8f3ae5E124c4f2214eb918c349) |
+| **BOTChain DEX Router** | `0x1414eD29FdFD322c3c0a830330ed982E2D629e76` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0x1414eD29FdFD322c3c0a830330ed982E2D629e76) |
+| **Yield & Lending Vault** | `0x76C574BC7464b28Fa33F0486C922bEc85EB1E207` | [Verify on BOTChain Explorer](https://scan.botchain.ai/address/0x76C574BC7464b28Fa33F0486C922bEc85EB1E207) |
 
 ---
 
 ## Quickstart Guide for Judges
 
-### 1. Configure Wallet (BOTChain Testnet)
-Add BOTChain Testnet manually to MetaMask/Rabby:
-* **Network Name:** BOTChain Testnet
-* **RPC URL:** `https://rpc.bohr.life`
-* **Chain ID:** `968`
+### 1. Configure Wallet (BOTChain Mainnet)
+Add BOTChain Mainnet manually to MetaMask/Rabby:
+* **Network Name:** BOTChain Mainnet
+* **RPC URL:** `https://rpc.botchain.ai`
+* **Chain ID:** `677`
 * **Currency Symbol:** `BOT`
-* **Block Explorer:** `https://scan.bohr.life/`
+* **Block Explorer:** `https://scan.botchain.ai/`
 
 ### 2. Setup the Repository
 Clone the repository and install dependencies at the root workspace:
