@@ -390,6 +390,17 @@ header {
   font-size: 0.85rem;
 }
 
+/* Hide number input spinners globally */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* --- TICKERS & COUNTERS (REALTIME) --- */
 .live-counter-container {
   display: flex;
