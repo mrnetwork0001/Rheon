@@ -1417,3 +1417,19 @@ footer {
     transform: translateY(0);
   }
 }
+
+/* --- DOCUMENTATION PAGE --- */
+.docs-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 4rem;
+}
+
+@media (max-width: 768px) {
+  .docs-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}

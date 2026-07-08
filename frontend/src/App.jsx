@@ -300,6 +300,7 @@ const RheonFlowAnimation = () => {
 function App() {
   const [view, setView] = useState("landing");
   const [dashboardView, setDashboardView] = useState("creator");
+  const [activeDocTab, setActiveDocTab] = useState(0);
   // Web3 state
   const [account, setAccount] = useState("");
   const [network, setNetwork] = useState("Not Connected");
@@ -1671,6 +1672,12 @@ function App() {
           >
             Recipient View
           </button>
+          <button 
+            className={dashboardView === "docs" ? "active" : ""} 
+            onClick={() => setDashboardView("docs")}
+          >
+            Docs
+          </button>
         </div>
       </div>
 
@@ -1734,6 +1741,7 @@ function App() {
         </div>
       )}
 
+      {dashboardView !== "docs" && (
       <div className="grid-layout">
         
         {/* Left Side: Realtime Ticker & Stream List */}
@@ -2367,14 +2375,198 @@ function App() {
                     </div>
                   ))}
                 </div>
-              </div>
+      </div>
+      )}
 
+      {dashboardView === "docs" && (
+        <div className="docs-container" style={{ animation: 'fadeInSlideUp 0.3s ease-out' }}>
+          {/* Sidebar */}
+          <div className="glass-card" style={{ padding: '1.5rem', height: 'fit-content' }}>
+            <h4 style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '1.25rem', paddingLeft: '0.5rem', fontWeight: 'bold' }}>Rheon Documentation</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                "1. Protocol Overview",
+                "2. System Architecture",
+                "3. Lending & Yield Pool",
+                "4. AI Sentry Node Mechanics",
+                "5. Developer Stack"
+              ].map((title, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveDocTab(idx)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '10px',
+                    border: '1px solid ' + (activeDocTab === idx ? 'var(--accent-cyan)' : 'transparent'),
+                    background: activeDocTab === idx ? 'rgba(0, 242, 254, 0.08)' : 'transparent',
+                    color: activeDocTab === idx ? 'var(--accent-cyan)' : 'var(--color-text-secondary)',
+                    fontWeight: activeDocTab === idx ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'var(--font-family-mono)',
+                    fontSize: '0.85rem'
+                  }}
+                  onMouseEnter={e => {
+                    if (activeDocTab !== idx) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                      e.currentTarget.style.color = '#fff';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (activeDocTab !== idx) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-text-secondary)';
+                    }
+                  }}
+                >
+                  {title}
+                </button>
+              ))}
             </div>
           </div>
 
-        </div>
+          {/* Main Content Area */}
+          <div className="glass-card" style={{ padding: '2.5rem', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '500px' }}>
+            <div>
+              {activeDocTab === 0 && (
+                <div>
+                  <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>1. Protocol Overview</h2>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Rheon is a real-time, trustless **Pay-Per-Second streaming payment protocol** designed for the machine-to-machine Web3 Knowledge Economy. 
+                    Built on the high-speed **BOHR Chain EVM L1**, Rheon enables users to pay AI agents and computational models for services continuously per-second, with built-in financial protections and autonomous dispute resolution.
+                  </p>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Instead of prepaying for services or risking credential leakage, Rheon secures computational value inside escrow vaults, routing claims dynamically. 
+                    Furthermore, locked deposits generate real-time DeFi yield, ensuring high capital efficiency for all participants.
+                  </p>
+                  <div style={{ background: 'rgba(0, 242, 254, 0.03)', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '1rem 1.25rem', color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                    💡 <strong>Core Principle:</strong> Pay only for the exact seconds of compute work rendered. If a service goes offline, the stream pauses instantly.
+                  </div>
+                </div>
+              )}
 
-      </div>
+              {activeDocTab === 1 && (
+                <div>
+                  <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>2. System Architecture</h2>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Rheon uses smart contracts to govern the streaming lifecycle: creation, pausing, withdrawals, and cancellation. When a stream accrues, settlements are split automatically across key actors:
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                      <strong style={{ color: 'var(--accent-cyan)', display: 'block', marginBottom: '0.25rem' }}>🤖 70% — AI Provider (Recipient)</strong>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Allocated to the active AI endpoint rendering the services.</span>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                      <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>🎨 20% — Model Creator</strong>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Sent directly to the original developer who trained or uploaded the AI model.</span>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                      <strong style={{ color: 'var(--state-success)', display: 'block', marginBottom: '0.25rem' }}>🏛️ 10% — Rheon DAO Treasury</strong>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Routed to the DAO smart contract to fund developer grants and protocol maintenance.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDocTab === 2 && (
+                <div>
+                  <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>3. Lending & Yield Pool</h2>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Locked escrow deposits in active streams are never idle. Rheon routes this escrowed liquidity directly into **Mock DeFi Yield Pools**, generating interest dynamically at a targeted **5% APY**. Receivers withdraw this accrued yield per-second.
+                  </p>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Users can also use the **Lending Vault** to borrow USDT. By locking native **$BOT** tokens as collateral (at a **150% collateral ratio**), users can borrow USDT directly from the accumulated pool at a fixed **10% APR**.
+                  </p>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--glass-border)', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--accent-cyan)', display: 'block', marginBottom: '0.5rem' }}>Borrow Example:</span>
+                    Borrowing 10 USDT requires locking 15 BOT tokens as collateral (assuming BOT = $1.00). Upon repaying the 10 USDT + interest, the locked BOT is instantly released.
+                  </div>
+                </div>
+              )}
+
+              {activeDocTab === 3 && (
+                <div>
+                  <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>4. AI Sentry Node Mechanics</h2>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    The **AI Sentry Node** acts as a decentralized watchdog for streaming payments:
+                  </p>
+                  <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
+                    <li><strong>Continuous Health Checks:</strong> The Sentry Node pings the AI provider's API endpoint every 3 seconds to monitor uptime and latency.</li>
+                    <li><strong>Outage Detection:</strong> If the API returns a non-200 error code or times out, the Sentry Node flags a service outage.</li>
+                    <li><strong>Automated Intervention:</strong> The Sentry Node signs a transaction calling `pauseStream` on-chain, pausing the stream immediately. This protects the payer from paying for offline AI models.</li>
+                    <li><strong>Dispute Resolution:</strong> If a dispute is raised, the Rheon DAO executes votes on-chain to decide whether to refund the sender or release funds.</li>
+                  </ul>
+                </div>
+              )}
+
+              {activeDocTab === 4 && (
+                <div>
+                  <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>5. Developer Stack</h2>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
+                    Rheon is built on cutting-edge EVM technology to support low latency and high frequency payments:
+                  </p>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--glass-border)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.75rem 0.5rem', color: '#fff', fontWeight: 'bold' }}>Component</th>
+                        <th style={{ padding: '0.75rem 0.5rem', color: '#fff', fontWeight: 'bold' }}>Technology</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Smart Contracts</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>Solidity v0.8.20, Hardhat, OpenZeppelin ERC-721 Receipts</td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>L1 Blockchain</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>BOHR Chain EVM (RPC: `https://rpc.bohr.life`)</td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Monitoring Node</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>TypeScript, Node.js HTTP Server, PM2 process management</td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Frontend App</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>React, Vite, Ethers.js v6, BohrScan Explorer integration</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <h3 style={{ color: '#fff', fontSize: '1.2rem', marginTop: '2rem', marginBottom: '0.75rem', fontWeight: 'bold' }}>Deployed Smart Contracts</h3>
+                  <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingLeft: '1.25rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}>
+                    <li style={{ marginBottom: '0.5rem' }}><strong>BotFlowStreamer (Core Escrow):</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{streamerAddr || "0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204"}</span></li>
+                    <li style={{ marginBottom: '0.5rem' }}><strong>BotFlowReceipt (ERC-721 NFT):</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{receiptNftAddr || "0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9"}</span></li>
+                    <li style={{ marginBottom: '0.5rem' }}><strong>Mock USDT Token:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6"}</span></li>
+                    <li style={{ marginBottom: '0.5rem' }}><strong>Bohr DEX Router:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345"}</span></li>
+                    <li style={{ marginBottom: '0.5rem' }}><strong>Yield & Lending Vault:</strong> <br/><span style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>{vaultAddr || "Loading..."}</span></li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
+              <button
+                className="btn btn-secondary"
+                disabled={activeDocTab === 0}
+                onClick={() => setActiveDocTab(prev => Math.max(0, prev - 1))}
+                style={{ opacity: activeDocTab === 0 ? 0.3 : 1, minWidth: '100px' }}
+              >
+                ← Previous
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={activeDocTab === 4}
+                onClick={() => setActiveDocTab(prev => Math.min(4, prev + 1))}
+                style={{ opacity: activeDocTab === 4 ? 0.3 : 1, minWidth: '100px' }}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="landing-footer" style={{ marginTop: '4rem', borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem' }}>
         <div className="footer-content">
