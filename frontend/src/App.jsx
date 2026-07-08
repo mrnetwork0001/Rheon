@@ -1657,26 +1657,34 @@ function App() {
         </div>
       </header>
 
-      {/* Main Dashboard Section */}
       <div className="dashboard-toggle-container">
         <div className="dashboard-toggle">
           <button 
             className={dashboardView === "creator" ? "active" : ""} 
             onClick={() => setDashboardView("creator")}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
           >
-            Creator View
+            <Zap size={14} />
+            <span className="toggle-label-desktop">Creator View</span>
+            <span className="toggle-label-mobile">Creator</span>
           </button>
           <button 
             className={dashboardView === "recipient" ? "active" : ""} 
             onClick={() => setDashboardView("recipient")}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
           >
-            Recipient View
+            <Coins size={14} />
+            <span className="toggle-label-desktop">Recipient View</span>
+            <span className="toggle-label-mobile">Recipient</span>
           </button>
           <button 
             className={dashboardView === "docs" ? "active" : ""} 
             onClick={() => setDashboardView("docs")}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
           >
-            Docs
+            <Terminal size={14} />
+            <span className="toggle-label-desktop">Docs View</span>
+            <span className="toggle-label-mobile">Docs</span>
           </button>
         </div>
       </div>

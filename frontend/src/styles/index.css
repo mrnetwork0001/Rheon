@@ -1460,3 +1460,19 @@ footer {
     display: none;
   }
 }
+
+.toggle-label-mobile {
+  display: none;
+}
+.toggle-label-desktop {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .toggle-label-mobile {
+    display: inline;
+  }
+  .toggle-label-desktop {
+    display: none;
+  }
+}
