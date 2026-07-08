@@ -568,7 +568,7 @@ function App() {
     setActiveTour(null);
   };
 
-  // Connect MetaMask and enforce BOTChain Testnet
+  // Connect MetaMask and enforce BOTChain Mainnet
   const connectWallet = async () => {
     if (!window.ethereum) {
       showToast("MetaMask is not installed. Please install it to use Rheon.", "error");
@@ -578,7 +578,7 @@ function App() {
       setLoading(true);
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       
-      const chainIdHex = '0x3c8'; // 968 in hex for BOT testnet
+      const chainIdHex = '0x2a5'; // 677 in hex for BOT mainnet
       
       try {
         await window.ethereum.request({
@@ -593,21 +593,21 @@ function App() {
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: chainIdHex,
-                chainName: 'BOTChain Testnet',
+                chainName: 'BOTChain Mainnet',
                 nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
-                rpcUrls: ['https://rpc.bohr.life'],
-                blockExplorerUrls: ['https://scan.bohr.life/']
+                rpcUrls: ['https://rpc.botchain.ai'],
+                blockExplorerUrls: ['https://scan.botchain.ai/']
               }],
             });
           } catch (addError) {
             console.error(addError);
-            showToast("Failed to add BOTChain Testnet. Please add it manually.", "error");
+            showToast("Failed to add BOTChain Mainnet. Please add it manually.", "error");
             setLoading(false);
             return;
           }
         } else {
           console.error(switchError);
-          showToast("You must switch to the BOTChain Testnet to use Rheon.", "error");
+          showToast("You must switch to the BOTChain Mainnet to use Rheon.", "error");
           setLoading(false);
           return;
         }
@@ -617,19 +617,19 @@ function App() {
       const web3Provider = new ethers.BrowserProvider(window.ethereum);
       const net = await web3Provider.getNetwork();
       
-      if (net.chainId !== 968n && net.chainId !== 968 && Number(net.chainId) !== 968) {
-        showToast("Please switch your wallet to BOTChain Testnet (Chain ID 968) to proceed.", "error");
+      if (net.chainId !== 677n && net.chainId !== 677 && Number(net.chainId) !== 677) {
+        showToast("Please switch your wallet to BOTChain Mainnet (Chain ID 677) to proceed.", "error");
         setLoading(false);
         return;
       }
       
       setAccount(accounts[0]);
       setProvider(web3Provider);
-      setNetwork("BOTChain Testnet");
+      setNetwork("BOTChain Mainnet");
       
       // Load balances
       await updateBalances(accounts[0], web3Provider);
-      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on BOTChain Testnet`);
+      addSentryLog("INFO", `Connected wallet: ${accounts[0]} on BOTChain Mainnet`);
     } catch (error) {
       console.error(error);
       addSentryLog("ERROR", `Failed to connect wallet: ${error.message}`);
@@ -857,7 +857,7 @@ function App() {
   const fetchGlobalStats = async () => {
     try {
       const activeStreamer = streamerAddr || "0x1E23d18CFc12c219E7CFA40Db4f1a7bA90a124B9";
-      const tempProvider = new ethers.JsonRpcProvider(import.meta.env.VITE_BOTCHAIN_RPC_URL || "https://rpc.bohr.life");
+      const tempProvider = new ethers.JsonRpcProvider(import.meta.env.VITE_BOTCHAIN_RPC_URL || "https://rpc.botchain.ai");
       const streamerContract = new ethers.Contract(activeStreamer, STREAMER_ABI, tempProvider);
       
       const nextId = await streamerContract.nextStreamId();
@@ -1720,7 +1720,7 @@ function App() {
               </div>
               <div className="footer-col">
                 <h4>ECOSYSTEM</h4>
-                <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
+                <a href="https://scan.botchain.ai/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
                 <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
                 <a href="javascript:void(0)">DeFi Yield Vaults</a>
               </div>
@@ -1862,7 +1862,7 @@ function App() {
             <span className="metric-subtext">
               {vaultAddr ? (
                 <a 
-                  href={`https://scan.bohr.life/address/${vaultAddr}`} 
+                  href={`https://scan.botchain.ai/address/${vaultAddr}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="highlight"
@@ -2751,7 +2751,7 @@ function App() {
                       </tr>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>L1 Blockchain</td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}>BOTChain EVM (RPC: <code>https://rpc.bohr.life</code>)</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>BOTChain EVM (RPC: <code>https://rpc.botchain.ai</code>)</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Monitoring Node</td>
@@ -2984,7 +2984,7 @@ function App() {
             </div>
             <div className="footer-col">
               <h4>ECOSYSTEM</h4>
-              <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
+              <a href="https://scan.botchain.ai/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
               <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
               <a href="javascript:void(0)">DeFi Yield Vaults</a>
             </div>
@@ -3048,12 +3048,12 @@ function App() {
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-              This ERC-721 Receipt was minted on BOTChain Testnet upon stream cancellation to verify payment for compute services rendered.
+              This ERC-721 Receipt was minted on BOTChain Mainnet upon stream cancellation to verify payment for compute services rendered.
             </p>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <a 
-                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}/instance/${selectedReceiptStream.id}`} 
+                href={`https://scan.botchain.ai/token/${receiptNftAddr || streamerAddr}/instance/${selectedReceiptStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
@@ -3108,7 +3108,7 @@ function App() {
                 </p>
                 {txModal.txHash && (
                   <a 
-                    href={`https://scan.bohr.life/tx/${txModal.txHash}`} 
+                    href={`https://scan.botchain.ai/tx/${txModal.txHash}`} 
                     target="_blank" 
                     rel="noreferrer" 
                     className="btn btn-secondary" 
@@ -3133,7 +3133,7 @@ function App() {
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {txModal.txHash && (
                     <a 
-                      href={`https://scan.bohr.life/tx/${txModal.txHash}`} 
+                      href={`https://scan.botchain.ai/tx/${txModal.txHash}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="btn btn-primary" 
@@ -3309,7 +3309,7 @@ function App() {
                 Close
               </button>
               <a 
-                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}/instance/${selectedDetailStream.id}`} 
+                href={`https://scan.botchain.ai/token/${receiptNftAddr || streamerAddr}/instance/${selectedDetailStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
