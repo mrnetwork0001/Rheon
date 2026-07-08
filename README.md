@@ -1,11 +1,11 @@
 # 🌊 Rheon: Trustless Real-time PayFi Micro-Streaming Protocol
 
-[![Built on BOHR Chain](https://img.shields.io/badge/Built_on-BOHR_Chain-00cc99?style=for-the-badge&logo=ethereum)](https://scan.bohr.life)
+[![Built on BOTChain](https://img.shields.io/badge/Built_on-BOTChain-00cc99?style=for-the-badge&logo=ethereum)](https://scan.bohr.life)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**Rheon** is a premium, real-time **Pay-Per-Second payment streaming and escrow protocol** built natively for the high-speed **BOHR Chain EVM L1**. 
+**Rheon** is a premium, real-time **Pay-Per-Second payment streaming and escrow protocol** built natively for the high-speed **BOTChain EVM L1**. 
 
-Designed specifically for the AI, GPU DePIN, and machine-to-machine Web3 Knowledge Economy, Rheon leverages BOHR Chain’s sub-second block times (~0.75s) and near-zero fees to unlock continuous micropayments with built-in consumer protections, automatic revenue splits, mock DeFi yield generation, and autonomous watchdog overrides.
+Designed specifically for the AI, GPU DePIN, and machine-to-machine Web3 Knowledge Economy, Rheon leverages BOTChain’s sub-second block times (~0.75s) and near-zero fees to unlock continuous micropayments with built-in consumer protections, automatic revenue splits, mock DeFi yield generation, and autonomous watchdog overrides.
 
 ---
 
@@ -57,25 +57,25 @@ sequenceDiagram
 
 ---
 
-## 📋 Deployed Contract Registry (BOHR Chain Testnet)
+## 📋 Deployed Contract Registry (BOTChain Testnet)
 
-All smart contracts are deployed and verified on the BOHR Chain block explorer:
+All smart contracts are deployed and verified on the BOTChain block explorer:
 
 | Contract Name | Address | Explorer Link |
 | :--- | :--- | :--- |
-| **BotFlowStreamer (Core)** | `0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204` | [Verify on BohrScan](https://scan.bohr.life/address/0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204) |
-| **BotFlowReceipt (ERC-721 NFT)** | `0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9` | [Verify on BohrScan](https://scan.bohr.life/address/0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9) |
-| **Mock USDT Token** | `0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6` | [Verify on BohrScan](https://scan.bohr.life/address/0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6) |
-| **Bohr DEX Router** | `0xD6425a02f0845B8D99e349C34D2E7A576E177345` | [Verify on BohrScan](https://scan.bohr.life/address/0xD6425a02f0845B8D99e349C34D2E7A576E177345) |
-| **Yield & Lending Vault** | `0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879` | [Verify on BohrScan](https://scan.bohr.life/address/0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879) |
+| **BotFlowStreamer (Core)** | `0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204) |
+| **BotFlowReceipt (ERC-721 NFT)** | `0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9) |
+| **Mock USDT Token** | `0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6) |
+| **BOTChain DEX Router** | `0xD6425a02f0845B8D99e349C34D2E7A576E177345` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xD6425a02f0845B8D99e349C34D2E7A576E177345) |
+| **Yield & Lending Vault** | `0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879` | [Verify on BOTChain Explorer](https://scan.bohr.life/address/0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879) |
 
 ---
 
 ## 🚀 Quickstart Guide for Judges
 
-### 1. Configure Wallet (BOHR Chain Testnet)
-Add BOHR Chain Testnet manually to MetaMask/Rabby:
-* **Network Name:** BOHR Chain Testnet
+### 1. Configure Wallet (BOTChain Testnet)
+Add BOTChain Testnet manually to MetaMask/Rabby:
+* **Network Name:** BOTChain Testnet
 * **RPC URL:** `https://rpc.bohr.life`
 * **Chain ID:** `968`
 * **Currency Symbol:** `BOT`
@@ -111,4 +111,4 @@ Open `http://localhost:3000` to start exploring the console. Use the **Docs** ta
 
 ---
 
-*Built with ❤️ for the BOHR Chain Hackathon.*
+*Built with ❤️ for the BOTChain Hackathon.*

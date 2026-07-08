@@ -759,7 +759,7 @@ function App() {
         uniqueUsers.add(u.toLowerCase());
       }
 
-      // Query actual Bohr DEX pair swap events
+      // Query actual BOTChain DEX pair swap events
       let onchainSwapVolume = 0;
       try {
         const routerAddress = bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345";
@@ -796,7 +796,7 @@ function App() {
           onchainSwapVolume = parseFloat(ethers.formatUnits(totalUSDT, 6));
         }
       } catch (err) {
-        console.error("Failed to fetch Bohr DEX swap volume:", err);
+        console.error("Failed to fetch BOTChain DEX swap volume:", err);
       }
       
       const finalUsers = uniqueUsers.size;
@@ -2483,7 +2483,7 @@ function App() {
                   <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>1. Protocol Overview</h2>
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
                     Rheon is a real-time, trustless <strong>Pay-Per-Second streaming payment protocol</strong> designed for the machine-to-machine Web3 Knowledge Economy. 
-                    Built on the high-speed <strong>BOHR Chain EVM L1</strong>, Rheon enables users to pay AI agents and computational models for services continuously per-second, with built-in financial protections and autonomous dispute resolution.
+                    Built on the high-speed <strong>BOTChain EVM L1</strong>, Rheon enables users to pay AI agents and computational models for services continuously per-second, with built-in financial protections and autonomous dispute resolution.
                   </p>
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
                     Instead of prepaying for services or risking credential leakage, Rheon secures computational value inside escrow vaults, routing claims dynamically. 
@@ -2579,7 +2579,7 @@ function App() {
                       </tr>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>L1 Blockchain</td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}>BOHR Chain EVM (RPC: <code>https://rpc.bohr.life</code>)</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>BOTChain EVM (RPC: <code>https://rpc.bohr.life</code>)</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Monitoring Node</td>
@@ -2587,7 +2587,7 @@ function App() {
                       </tr>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>Frontend App</td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}>React, Vite, Ethers.js v6, BohrScan Explorer integration</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>React, Vite, Ethers.js v6, BOTChain Explorer integration</td>
                       </tr>
                     </tbody>
                   </table>
@@ -2693,11 +2693,11 @@ function App() {
 
                     <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: 'bold', color: '#fff' }}>Bohr DEX Router:</span>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>BOTChain DEX Router:</span>
                         <button 
                           onClick={() => {
                             navigator.clipboard.writeText(bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
-                            showToast("Bohr DEX Router address copied!", "success");
+                            showToast("BOTChain DEX Router address copied!", "success");
                           }}
                           style={{
                             background: 'rgba(255, 255, 255, 0.02)',
@@ -2888,7 +2888,7 @@ function App() {
                 className="btn btn-primary" 
                 style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }}
               >
-                View on BohrScan
+                View on BOTChain Explorer
               </a>
               <button 
                 className="btn btn-secondary" 
@@ -2933,7 +2933,7 @@ function App() {
                 `}</style>
                 <h4 style={{ color: 'var(--accent-cyan)', marginBottom: '0.75rem' }}>Transaction Broadcasting...</h4>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Waiting for transaction to be mined on Bohr Chain.
+                  Waiting for transaction to be mined on BOTChain.
                 </p>
                 {txModal.txHash && (
                   <a 
@@ -2943,7 +2943,7 @@ function App() {
                     className="btn btn-secondary" 
                     style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: '100%', fontSize: '0.85rem', gap: '0.5rem' }}
                   >
-                    View on BohrScan Explorer
+                    View on BOTChain Explorer
                     <ArrowDownUp size={14} />
                   </a>
                 )}
@@ -3144,7 +3144,7 @@ function App() {
                 className="btn btn-primary" 
                 style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', borderRadius: '50px', height: '44px', fontWeight: 'bold', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }}
               >
-                Verify on BohrScan
+                Verify on BOTChain Explorer
               </a>
             </div>
 
