@@ -2405,7 +2405,7 @@ function App() {
 
       {showReceiptModal && selectedReceiptStream && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ maxWidth: '420px', width: '90%', padding: '2rem', textAlign: 'center', border: '1px solid #8b5cf6', boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)' }}>
+          <div className="glass-card" style={{ maxWidth: '420px', width: '90%', padding: '2rem 1rem', textAlign: 'center', border: '1px solid #8b5cf6', boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)' }}>
             <h3 style={{ color: '#c084fc', marginBottom: '1.5rem' }}>Rheon Proof-of-Compute Receipt</h3>
             
             {/* NFT Card */}
@@ -2456,19 +2456,19 @@ function App() {
               This ERC-721 Receipt was minted on BOT Chain Testnet upon stream cancellation to verify payment for compute services rendered.
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <a 
                 href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedReceiptStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
-                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem' }}
+                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }}
               >
                 View on BohrScan
               </a>
               <button 
                 className="btn btn-secondary" 
-                style={{ flex: 1, fontSize: '0.85rem' }} 
+                style={{ flex: 1, fontSize: '0.85rem', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }} 
                 onClick={() => {
                   setShowReceiptModal(false);
                   setSelectedReceiptStream(null);
@@ -2483,7 +2483,7 @@ function App() {
 
       {txModal.isOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
-          <div className="glass-card" style={{ maxWidth: '420px', width: '95%', padding: '2rem', textAlign: 'center', border: txModal.status === 'error' ? '1px solid var(--state-error)' : txModal.status === 'success' ? '1px solid var(--state-success)' : '1px solid var(--accent-cyan)', boxShadow: txModal.status === 'error' ? '0 8px 32px rgba(255, 59, 48, 0.15)' : txModal.status === 'success' ? '0 8px 32px rgba(0, 255, 157, 0.15)' : '0 8px 32px rgba(0, 242, 254, 0.15)' }}>
+          <div className="glass-card" style={{ maxWidth: '420px', width: '95%', padding: '2rem 1rem', textAlign: 'center', border: txModal.status === 'error' ? '1px solid var(--state-error)' : txModal.status === 'success' ? '1px solid var(--state-success)' : '1px solid var(--accent-cyan)', boxShadow: txModal.status === 'error' ? '0 8px 32px rgba(255, 59, 48, 0.15)' : txModal.status === 'success' ? '0 8px 32px rgba(0, 255, 157, 0.15)' : '0 8px 32px rgba(0, 242, 254, 0.15)' }}>
             <h3 style={{ color: '#fff', marginBottom: '1.5rem', fontFamily: 'var(--font-family-mono)' }}>
               {txModal.title}
             </h3>
@@ -2535,19 +2535,19 @@ function App() {
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                   Your transaction has been finalized on-chain.
                 </p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {txModal.txHash && (
                     <a 
                       href={`https://scan.bohr.life/tx/${txModal.txHash}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="btn btn-primary" 
-                      style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem' }}
+                      style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }}
                     >
                       View on Explorer
                     </a>
                   )}
-                  <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.85rem' }} onClick={closeTxModal}>
+                  <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.85rem', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }} onClick={closeTxModal}>
                     Close
                   </button>
                 </div>
