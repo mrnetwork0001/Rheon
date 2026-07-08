@@ -2688,7 +2688,7 @@ function App() {
                 <div>
                   <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1.5rem', background: 'linear-gradient(90deg, #fff 0%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>3. Lending & Yield Pool</h2>
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
-                    Locked escrow deposits in active streams are never idle. Rheon routes this escrowed liquidity directly into <strong>Mock DeFi Yield Pools</strong>, generating interest dynamically at a targeted <strong>5% APY</strong>. Receivers withdraw this accrued yield per-second.
+                    Locked escrow deposits in active streams are never idle. Rheon routes this escrowed liquidity directly into <strong>DeFi Yield Pools</strong>, generating interest dynamically at a targeted <strong>5% APY</strong>. Receivers withdraw this accrued yield per-second.
                   </p>
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
                     Users can also use the <strong>Lending Vault</strong> to borrow USDT. By locking native <strong>$BOT</strong> tokens as collateral (at a <strong>150% collateral ratio</strong>), users can borrow USDT directly from the accumulated pool at a fixed <strong>10% APR</strong>.
@@ -3282,7 +3282,7 @@ function App() {
 
             {/* Info Box */}
             <div style={{ background: 'rgba(0, 242, 254, 0.03)', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: '1.4', marginBottom: '1.5rem' }}>
-              💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to Mock DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second onchain.
+              💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second onchain.
             </div>
 
             {/* Actions for active stream */}
