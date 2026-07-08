@@ -49,7 +49,7 @@ sequenceDiagram
 ## 🌟 Key Features & Innovations
 
 * ⚡ **Pay-Per-Second Micro-Streams:** Pro-rata balance calculations updated on every block. Receivers withdraw accrued earnings in real-time.
-* 🛡️ **Autonomous AI Sentry Node Watchdog:** Constantly monitors AI endpoint latency and uptime. Executes high-speed onchain pause interventions the moment an outage occurs.
+* 🛡️ **Autonomous AI Sentry Node Watchdog (24/7 Dedicated VPS):** Hosted 24/7 on an isolated, high-uptime production VPS environment to constantly monitor AI endpoint latency and uptime. Executes high-speed onchain pause interventions the moment an outage occurs.
 * 🏦 **Yield & Lending Vault:** Locked escrows dynamically generate a targeted **5% APY**. Users can lock native `$BOT` tokens as collateral (150% coverage) to borrow `$USDT` from this vault at a fixed 10% APR.
 * 🏛️ **Decentralized Split Logic:** Streaming revenue is automatically routed onchain: **70%** to the AI Provider, **20%** to the Model Creator, and **10%** to the DAO Treasury.
 * ⚖️ **DAO Dispute Resolution:** Allows manual disputes to be resolved through community onchain votes to issue refunds or release funds.
@@ -90,7 +90,7 @@ npm install
 ```
 
 ### 3. Start the AI Sentry Node
-The Sentry Node acts as the automated network watchdog:
+The Sentry Node acts as the automated network watchdog. *(Note: In production, our Sentry Node watchdog is actively hosted 24/7 on a dedicated Linux VPS to provide permanent real-time stream monitoring. If you wish to run a local instance for development):*
 ```bash
 cd sentry
 cp .env.example .env
