@@ -324,8 +324,9 @@ function App() {
     receiver: "",
     deposit: "",
     rate: "0.1",
-    sentry: "0x15d34aaf54f6577393b74d6a22e18517860d268a"
+    sentry: "0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED"
   });
+  const [sentrySelectMode, setSentrySelectMode] = useState("0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED");
 
   // Swap State
   const [swapFrom, setSwapFrom] = useState("BOT");
@@ -334,7 +335,7 @@ function App() {
 
   // Sentry Node Integration State
   const [sentryStatus, setSentryStatus] = useState("HEALTHY");
-  const [sentryAddress, setSentryAddress] = useState("0x15d34aaf54f6577393b74d6a22e18517860d268a");
+  const [sentryAddress, setSentryAddress] = useState("0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED");
   const [sentryLogs, setSentryLogs] = useState([
     { timestamp: new Date().toISOString(), type: "INFO", message: "Sentry dashboard initialized. Waiting for connection..." }
   ]);
@@ -2051,13 +2052,34 @@ function App() {
 
               <div className="form-group">
                 <label className="form-label">Authorized Sentry Node (AI Sentry)</label>
-                <input 
-                  type="text" 
+                <select 
                   className="input-field" 
-                  value={newStream.sentry}
-                  onChange={e => setNewStream({...newStream, sentry: e.target.value})}
-                  required
-                />
+                  value={sentrySelectMode}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSentrySelectMode(val);
+                    if (val !== "custom") {
+                      setNewStream({ ...newStream, sentry: val });
+                    } else {
+                      setNewStream({ ...newStream, sentry: "" });
+                    }
+                  }}
+                  style={{ marginBottom: sentrySelectMode === "custom" ? "0.75rem" : "0" }}
+                >
+                  <option value="0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED">Active VPS Watchdog (0x1da055...)</option>
+                  <option value="custom">Add Custom Sentry Node Address...</option>
+                </select>
+
+                {sentrySelectMode === "custom" && (
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="Enter custom 0x Sentry Address"
+                    value={newStream.sentry}
+                    onChange={e => setNewStream({ ...newStream, sentry: e.target.value })}
+                    required
+                  />
+                )}
               </div>
 
               {/* Feature 1 UI: Revenue Splitting Breakdown */}
