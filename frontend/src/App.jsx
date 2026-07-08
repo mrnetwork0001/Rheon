@@ -139,6 +139,12 @@ const BDEX_ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory amounts)"
 ];
 
+const RHEON_ROUTER_ABI = [
+  "function swapExactBOTForTokens(address tokenOut, uint amountOutMin, address to, uint deadline) external payable returns (uint[] memory amounts)",
+  "function swapExactTokensForBOT(uint amountIn, uint amountOutMin, address tokenIn, address to, uint deadline) external returns (uint[] memory amounts)",
+  "event RheonSwap(address indexed user, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)"
+];
+
 const RheonFlowAnimation = () => {
   const canvasRef = useRef(null);
   const [localOutage, setLocalOutage] = useState(false);
@@ -370,6 +376,7 @@ function App() {
   const [streamerAddr, setStreamerAddr] = useState(import.meta.env.VITE_STREAMER_CONTRACT_ADDRESS || "");
   const [usdtAddr, setUsdtAddr] = useState(import.meta.env.VITE_USDT_ADDRESS || "");
   const [bdexAddr, setBdexAddr] = useState(import.meta.env.VITE_BDEX_ROUTER_ADDRESS || "0xD6425a02f0845B8D99e349C34D2E7A576E177345");
+  const [rheonRouterAddr, setRheonRouterAddr] = useState(import.meta.env.VITE_RHEON_ROUTER_ADDRESS || "0x485fcab52e7CAF8f3ae5E124c4f2214eb918c349");
   // Hardcoded for demo: assumes DAO deployed right after Streamer at a nearby nonce
   const [daoAddr, setDaoAddr] = useState("");
   const [vaultAddr, setVaultAddr] = useState("");
@@ -891,44 +898,24 @@ function App() {
         uniqueUsers.add(u.toLowerCase());
       }
 
-      // Query actual BOTChain DEX pair swap events
+      // Query actual RheonSwapRouter custom swap events
       let onchainSwapVolume = 0;
       try {
-        const routerAddress = bdexAddr || "0xD6425a02f0845B8D99e349C34D2E7A576E177345";
-        const routerContract = new ethers.Contract(routerAddress, ["function factory() view returns (address)"], tempProvider);
-        const factoryAddr = await routerContract.factory();
-        const factoryContract = new ethers.Contract(factoryAddr, ["function getPair(address, address) view returns (address)"], tempProvider);
-        const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
-        const USDT = usdtAddr || "0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6";
-        const pairAddr = await factoryContract.getPair(WBOT, USDT);
+        const routerContract = new ethers.Contract(rheonRouterAddr, RHEON_ROUTER_ABI, tempProvider);
+        const filter = routerContract.filters.RheonSwap();
+        const logs = await routerContract.queryFilter(filter, 1, "latest");
         
-        if (pairAddr && pairAddr !== ethers.ZeroAddress) {
-          const pairContract = new ethers.Contract(pairAddr, [
-            "event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)"
-          ], tempProvider);
-          
-          const latestBlock = await tempProvider.getBlockNumber();
-          // Query from block 1 to catch all historical swaps on testnet
-          const fromBlock = 1;
-          const filter = pairContract.filters.Swap();
-          const logs = await pairContract.queryFilter(filter, fromBlock, "latest");
-          
-          const isUSDTToken0 = USDT.toLowerCase() < WBOT.toLowerCase();
-          let totalUSDT = 0n;
-          
-          for (const log of logs) {
-            const { amount0In, amount1In, amount0Out, amount1Out } = log.args;
-            if (isUSDTToken0) {
-              totalUSDT += amount0In + amount0Out;
-            } else {
-              totalUSDT += amount1In + amount1Out;
-            }
+        for (const log of logs) {
+          const { tokenIn, tokenOut, amountIn, amountOut } = log.args;
+          const USDT = usdtAddr.toLowerCase();
+          if (tokenIn.toLowerCase() === USDT) {
+            onchainSwapVolume += parseFloat(ethers.formatUnits(amountIn, 6));
+          } else if (tokenOut.toLowerCase() === USDT) {
+            onchainSwapVolume += parseFloat(ethers.formatUnits(amountOut, 6));
           }
-          
-          onchainSwapVolume = parseFloat(ethers.formatUnits(totalUSDT, 6));
         }
       } catch (err) {
-        console.error("Failed to fetch BOTChain DEX swap volume:", err);
+        console.error("Failed to fetch custom RheonSwapRouter volume:", err);
       }
       
       const finalUsers = uniqueUsers.size;
@@ -1085,20 +1072,18 @@ function App() {
       setLoading(true);
       showTxStatus("Swap Tokens", "signing");
       const signer = await provider.getSigner();
-      const bdexContract = new ethers.Contract(bdexAddr, BDEX_ABI, signer);
+      const rheonRouterContract = new ethers.Contract(rheonRouterAddr, RHEON_ROUTER_ABI, signer);
       
-      const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
       const USDT = usdtAddr;
       const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 mins from now
 
       if (swapFrom === "BOT") {
         addSentryLog("INFO", `Swapping ${amount} BOT to USDT...`);
         const valueWei = ethers.parseEther(swapAmount);
-        const path = [WBOT, USDT];
         
-        const tx = await bdexContract.swapExactETHForTokens(
-          0, // amountOutMin (0 for demo, ideally calculated to prevent slippage)
-          path,
+        const tx = await rheonRouterContract.swapExactBOTForTokens(
+          USDT,
+          0, // amountOutMin
           account,
           deadline,
           { value: valueWei }
@@ -1110,20 +1095,19 @@ function App() {
       } else {
         addSentryLog("INFO", `Swapping ${amount} USDT to BOT...`);
         const tokenContract = new ethers.Contract(usdtAddr, ERC20_ABI, signer);
-        const usdtWei = ethers.parseUnits(swapAmount, 6); // Assuming 6 decimals for USDT
-        const path = [USDT, WBOT];
+        const usdtWei = ethers.parseUnits(swapAmount, 6);
         
-        // Approve BDEX Router
+        // Approve Rheon Router to pull USDT
         addSentryLog("INFO", "Approving USDT for swap...");
-        const appTx = await tokenContract.approve(bdexAddr, usdtWei);
+        const appTx = await tokenContract.approve(rheonRouterAddr, usdtWei);
         showTxStatus("USDT Approval", "pending", appTx.hash);
         await appTx.wait();
         
         showTxStatus("Swap USDT for BOT", "signing");
-        const tx = await bdexContract.swapExactTokensForETH(
+        const tx = await rheonRouterContract.swapExactTokensForBOT(
           usdtWei,
           0, // amountOutMin
-          path,
+          USDT,
           account,
           deadline
         );
@@ -2892,6 +2876,38 @@ function App() {
                       </div>
                       <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
                         {bdexAddr || "0x1414eD29FdFD322c3c0a830330ed982E2D629e76"}
+                      </code>
+                    </li>
+
+                    <li style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>RheonSwapRouter (DeFi Analytics):</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(rheonRouterAddr || "0x485fcab52e7CAF8f3ae5E124c4f2214eb918c349");
+                            showToast("RheonSwapRouter address copied!", "success");
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          className="copy-btn-hover"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
+                      <code style={{ color: 'var(--accent-cyan)', wordBreak: 'break-all', display: 'block', padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'var(--font-family-mono)' }}>
+                        {rheonRouterAddr || "0x485fcab52e7CAF8f3ae5E124c4f2214eb918c349"}
                       </code>
                     </li>
 
