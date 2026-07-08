@@ -1570,7 +1570,7 @@ function App() {
                 AI-shielded real-time streaming payments and decentralized dispute resolution on BOTChain.
               </p>
               <div className="footer-socials">
-                <a href="#" aria-label="X (Twitter)">
+                <a href="javascript:void(0)" aria-label="X (Twitter)">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 </a>
                 <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" aria-label="GitHub">
@@ -1582,20 +1582,20 @@ function App() {
             <div className="footer-links-container">
               <div className="footer-col">
                 <h4>PROTOCOL</h4>
-                <a href="#">Features</a>
-                <a href="#">AI-Shield</a>
-                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); }}>Launch App</a>
+                <a href="javascript:void(0)">Features</a>
+                <a href="javascript:void(0)">AI-Shield</a>
+                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setView("app"); }}>Launch App</a>
               </div>
               <div className="footer-col">
                 <h4>ECOSYSTEM</h4>
                 <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
                 <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
-                <a href="#">DeFi Yield Vaults</a>
+                <a href="javascript:void(0)">DeFi Yield Vaults</a>
               </div>
               <div className="footer-col">
                 <h4>RESOURCES</h4>
-                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
-                <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
+                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
+                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setView("app"); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
                 <a href="https://dex.botchain.ai/" target="_blank" rel="noreferrer">BDEX Swap</a>
               </div>
             </div>
@@ -2794,7 +2794,7 @@ function App() {
               AI-shielded real-time streaming payments and decentralized dispute resolution on BOTChain.
             </p>
             <div className="footer-socials">
-              <a href="#" aria-label="X (Twitter)">
+              <a href="javascript:void(0)" aria-label="X (Twitter)">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
               </a>
               <a href="https://github.com/mrnetwork0001/BOTflow" target="_blank" rel="noreferrer" aria-label="GitHub">
@@ -2805,20 +2805,20 @@ function App() {
           <div className="footer-links-container">
             <div className="footer-col">
               <h4>PROTOCOL</h4>
-              <a href="#">Features</a>
-              <a href="#">AI-Shield</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setView("app"); }}>Launch App</a>
+              <a href="javascript:void(0)">Features</a>
+              <a href="javascript:void(0)">AI-Shield</a>
+              <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setView("app"); }}>Launch App</a>
             </div>
             <div className="footer-col">
               <h4>ECOSYSTEM</h4>
               <a href="https://scan.bohr.life/" target="_blank" rel="noreferrer">BOTChain Explorer</a>
               <a href="https://wallet.botchain.ai/" target="_blank" rel="noreferrer">BOT Wallet</a>
-              <a href="#">DeFi Yield Vaults</a>
+              <a href="javascript:void(0)">DeFi Yield Vaults</a>
             </div>
             <div className="footer-col">
               <h4>RESOURCES</h4>
-              <a href="#" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
+              <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Docs</a>
+              <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); setDashboardView("docs"); setActiveDocTab(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Contracts</a>
               <a href="https://dex.botchain.ai/" target="_blank" rel="noreferrer">BDEX Swap</a>
             </div>
           </div>
