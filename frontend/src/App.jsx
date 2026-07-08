@@ -2474,7 +2474,7 @@ function App() {
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <a 
-                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}?a=${selectedReceiptStream.id}`} 
+                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}/instance/${selectedReceiptStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
@@ -2730,7 +2730,7 @@ function App() {
                 Close
               </button>
               <a 
-                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}?a=${selectedDetailStream.id}`} 
+                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}/instance/${selectedDetailStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
