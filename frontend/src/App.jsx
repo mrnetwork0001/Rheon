@@ -20,9 +20,71 @@ import {
   LogOut,
   Check,
   Menu,
-  X
+  X,
+  HelpCircle
 } from 'lucide-react';
 import { ethers } from 'ethers';
+
+const creatorTourSteps = [
+  {
+    anchor: "#tour-metrics",
+    title: "Protocol Metrics & TVL",
+    content: "View the total volume locked in your outgoing streams and check the dynamic mainnet TVL of the DeFi Yield Vault (target 5% APY)."
+  },
+  {
+    anchor: "#tour-ticker-panel",
+    title: "Real-time Flow Ticker",
+    content: "Monitor your active streams ticking per second. You can pause, resume, or withdraw your accrued yield directly from this console."
+  },
+  {
+    anchor: "#tour-streams-panel",
+    title: "Outgoing Stream Register",
+    content: "A log of all your pro-rata outgoing streams. Click on any stream here to select it and view its ticking statistics above."
+  },
+  {
+    anchor: "#tour-creator-form",
+    title: "Initialize Streaming Escrows",
+    content: "Set up new streams here. Set receiver address, deposit amount, pro-rata rate, and choose your VPS Sentry Node watchdog."
+  },
+  {
+    anchor: "#tour-lending-vault",
+    title: "DeFi Yield & Lending Pool",
+    content: "Optimize capital efficiency. Lock native $BOT collateral (150% ratio) to borrow USDT dynamically at a fixed 10% APR."
+  },
+  {
+    anchor: "#tour-swap-portal",
+    title: "BDEX Gasless Swap",
+    content: "Instantly exchange native $BOT tokens for $USDT gaslessly to fund your streaming accounts."
+  }
+];
+
+const recipientTourSteps = [
+  {
+    anchor: "#tour-recv-metrics",
+    title: "Incoming Revenue & Streams",
+    content: "Check your total incoming earnings from streams and monitor how many active streams are paying you in real-time."
+  },
+  {
+    anchor: "#tour-ticker-panel",
+    title: "Incoming Accrual Ticker",
+    content: "Watch your incoming claimable balance accumulate pro-rata per second. Click 'Withdraw' to claim your earnings onchain."
+  },
+  {
+    anchor: "#tour-streams-panel",
+    title: "Incoming Stream Register",
+    content: "A register of all your incoming payments. Select a stream here to inspect its details and check its dispute status."
+  },
+  {
+    anchor: "#tour-sentry-panel",
+    title: "AI Sentry Node Console",
+    content: "Monitor the health of your 24/7 VPS Sentry node. Simulate provider outages to verify the high-speed auto-pause protection."
+  },
+  {
+    anchor: "#tour-swap-portal",
+    title: "BDEX Swap Portal",
+    content: "Instantly trade native $BOT tokens for $USDT gaslessly to cash out or maintain liquidity."
+  }
+];
 
 // Fallback configuration
 const DEFAULT_RPC = "https://rpc.botchain.ai";
@@ -327,6 +389,8 @@ function App() {
     sentry: "0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED"
   });
   const [sentrySelectMode, setSentrySelectMode] = useState("0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED");
+  const [activeTour, setActiveTour] = useState(null);
+  const [tourStep, setTourStep] = useState(0);
 
   // Swap State
   const [swapFrom, setSwapFrom] = useState("BOT");
@@ -436,6 +500,55 @@ function App() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Guided Tour logic
+  useEffect(() => {
+    // Clean up highlights first
+    document.querySelectorAll(".tour-highlight").forEach(el => el.classList.remove("tour-highlight"));
+
+    if (activeTour) {
+      const steps = activeTour === "creator" ? creatorTourSteps : recipientTourSteps;
+      const currentStep = steps[tourStep];
+      if (currentStep && currentStep.anchor) {
+        const timer = setTimeout(() => {
+          const el = document.querySelector(currentStep.anchor);
+          if (el) {
+            el.classList.add("tour-highlight");
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeTour, tourStep, dashboardView]);
+
+  const handleStartTour = () => {
+    if (dashboardView === "docs") {
+      setDashboardView("creator");
+      setActiveTour("creator");
+    } else {
+      setActiveTour(dashboardView === "creator" ? "creator" : "recipient");
+    }
+    setTourStep(0);
+  };
+
+  const handleNextStep = (totalSteps) => {
+    if (tourStep < totalSteps - 1) {
+      setTourStep(prev => prev + 1);
+    } else {
+      setActiveTour(null);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (tourStep > 0) {
+      setTourStep(prev => prev - 1);
+    }
+  };
+
+  const handleSkipTour = () => {
+    setActiveTour(null);
+  };
 
   // Connect MetaMask and enforce BOTChain Testnet
   const connectWallet = async () => {
@@ -1657,7 +1770,7 @@ function App() {
         </div>
       </header>
 
-      <div className="dashboard-toggle-container">
+      <div className="dashboard-toggle-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
         <div className="dashboard-toggle">
           <button 
             className={dashboardView === "creator" ? "active" : ""} 
@@ -1687,10 +1800,33 @@ function App() {
             <span className="toggle-label-mobile">Docs</span>
           </button>
         </div>
+
+        {dashboardView !== "docs" && (
+          <button 
+            className="btn btn-outline" 
+            onClick={handleStartTour}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.4rem 1rem', 
+              borderRadius: '8px', 
+              borderColor: 'var(--accent-purple)',
+              color: 'var(--color-text-primary)',
+              fontSize: '0.875rem',
+              background: 'var(--glass-bg)',
+              cursor: 'pointer',
+              boxShadow: '0 0 10px rgba(139, 92, 246, 0.15)'
+            }}
+          >
+            <HelpCircle size={14} style={{ color: 'var(--accent-purple)' }} />
+            <span>Guide Tour</span>
+          </button>
+        )}
       </div>
 
       {dashboardView === "creator" && (
-        <div className="dashboard-metrics">
+        <div className="dashboard-metrics" id="tour-metrics">
           <div className="metric-card">
             <span className="metric-label">Total Value Locked</span>
             <span className="metric-value">
@@ -1728,7 +1864,7 @@ function App() {
       )}
 
       {dashboardView === "recipient" && (
-        <div className="dashboard-metrics">
+        <div className="dashboard-metrics" id="tour-recv-metrics">
           <div className="metric-card">
             <span className="metric-label">Total Incoming Revenue</span>
             <span className="metric-value">
@@ -1757,7 +1893,7 @@ function App() {
           
           {/* Active Ticking Counter */}
           {!currentActiveStream || !currentActiveStream.isActive ? (
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', textAlign: 'center' }}>
+            <div className="glass-card" id="tour-ticker-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', textAlign: 'center' }}>
               <Activity size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', opacity: 0.5 }} />
               <h3 style={{ color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>No Active Stream Selected</h3>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
@@ -1765,7 +1901,7 @@ function App() {
               </p>
             </div>
           ) : (
-            <div className="glass-card">
+            <div className="glass-card" id="tour-ticker-panel">
               <div className="live-counter-container">
                 <span className="live-counter-label">Active Flow Accumulation</span>
                 <div className="live-ticker">
@@ -1835,7 +1971,7 @@ function App() {
           )}
 
           {/* Active Streams Panel */}
-          <div className="glass-card">
+          <div className="glass-card" id="tour-streams-panel">
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Coins size={20} className="text-cyan" />
               {dashboardView === "creator" ? "Your Outgoing Streams" : "Your Incoming Streams"}
@@ -1996,7 +2132,7 @@ function App() {
 
           {/* Create Stream Panel */}
           {dashboardView === "creator" && (
-            <div className="glass-card">
+            <div className="glass-card" id="tour-creator-form">
             <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Activity size={20} className="text-cyan" />
               Initialize New Stream
@@ -2135,7 +2271,7 @@ function App() {
           </div>
 
           {/* BDEX Swap Portal */}
-          <div className="glass-card">
+          <div className="glass-card" id="tour-swap-portal">
             <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ArrowDownUp size={20} className="text-cyan" />
               BDEX Swap Portal
@@ -2212,7 +2348,7 @@ function App() {
           </div>
 
           {/* Rheon Yield & Lending Pool Console */}
-          <div className="glass-card">
+          <div className="glass-card" id="tour-lending-vault">
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Landmark size={20} className="text-cyan" />
               Rheon Yield & Lending Pool
@@ -2335,7 +2471,7 @@ function App() {
           </div>
 
           {/* AI Sentry Node Status Panel */}
-          <div className="glass-card">
+          <div className="glass-card" id="tour-sentry-panel">
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldCheck size={20} style={{ color: 'var(--state-success)' }} />
               AI Sentry Node Console
@@ -3201,6 +3337,54 @@ function App() {
           <span>{toast.message}</span>
         </div>
       )}
+
+      {activeTour && (() => {
+        const steps = activeTour === "creator" ? creatorTourSteps : recipientTourSteps;
+        const step = steps[tourStep];
+        if (!step) return null;
+
+        return (
+          <>
+            <div className="tour-overlay-dim" onClick={handleSkipTour} />
+            <div className="tour-controller-card">
+              <div className="tour-controller-header">
+                <h4 className="tour-controller-title">{step.title}</h4>
+                <span className="tour-step-indicator">
+                  STEP {tourStep + 1} / {steps.length}
+                </span>
+              </div>
+              <p className="tour-controller-body">{step.content}</p>
+              <div className="tour-controller-actions">
+                <button className="tour-btn-skip" onClick={handleSkipTour}>
+                  Skip Tour
+                </button>
+                <div className="tour-nav-group">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={handlePrevStep}
+                    disabled={tourStep === 0}
+                    style={{ 
+                      opacity: tourStep === 0 ? 0.3 : 1, 
+                      padding: '0.3rem 0.75rem', 
+                      fontSize: '0.8rem',
+                      cursor: tourStep === 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => handleNextStep(steps.length)}
+                    style={{ padding: '0.3rem 1rem', fontSize: '0.8rem' }}
+                  >
+                    {tourStep === steps.length - 1 ? "Finish" : "Next"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

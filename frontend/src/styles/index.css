@@ -1476,3 +1476,99 @@ footer {
     display: none;
   }
 }
+
+/* --- INTERACTIVE ONBOARDING TOUR --- */
+.tour-highlight {
+  position: relative;
+  z-index: 10001 !important;
+  border-color: var(--accent-purple) !important;
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.7) !important;
+  transform: scale(1.015);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tour-overlay-dim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(4, 5, 10, 0.65);
+  backdrop-filter: blur(2.5px);
+  z-index: 10000;
+  transition: all 0.3s ease;
+}
+
+.tour-controller-card {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 460px;
+  background: rgba(10, 12, 22, 0.95);
+  border: 1px solid var(--accent-purple);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 15px rgba(139, 92, 246, 0.2);
+  z-index: 10002;
+  animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(10px);
+}
+
+.tour-controller-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.tour-step-indicator {
+  font-family: var(--font-family-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  background: rgba(0, 242, 254, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+}
+
+.tour-controller-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.tour-controller-body {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.tour-controller-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-btn-skip {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+}
+
+.tour-btn-skip:hover {
+  color: var(--state-error);
+}
+
+.tour-nav-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
