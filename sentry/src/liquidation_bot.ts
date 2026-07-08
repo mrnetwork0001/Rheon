@@ -65,17 +65,17 @@ async function startLiquidationBot() {
 
   // Subscribe to new Borrowed events in real-time
   poolContract.on("Borrowed", (borrower, amount, collateral) => {
-    console.log(`[BOT] On-chain Event: Borrowed detected for ${borrower}. Adding to watch-list.`);
+    console.log(`[BOT] Onchain Event: Borrowed detected for ${borrower}. Adding to watch-list.`);
     activeBorrowers.add(borrower);
   });
 
   poolContract.on("Repaid", (borrower, principal, interest) => {
-    console.log(`[BOT] On-chain Event: Repaid detected for ${borrower}. Removing from active watch-list.`);
+    console.log(`[BOT] Onchain Event: Repaid detected for ${borrower}. Removing from active watch-list.`);
     activeBorrowers.delete(borrower);
   });
 
   poolContract.on("Liquidated", (borrower, liquidator, debt, collateral) => {
-    console.log(`[BOT] On-chain Event: Liquidated detected for ${borrower} by ${liquidator}.`);
+    console.log(`[BOT] Onchain Event: Liquidated detected for ${borrower} by ${liquidator}.`);
     activeBorrowers.delete(borrower);
   });
 

@@ -1,141 +1,114 @@
-# 🌊 Rheon: AI-Shielded Continuous Payment Streaming
+# 🌊 Rheon: Trustless Real-time PayFi Micro-Streaming Protocol
 
-[![Watch Demo Video](https://img.shields.io/badge/Watch-Demo_Video-blue?style=for-the-badge)](https://youtu.be/your-video-link-here)
-[![Built on BOT Chain](https://img.shields.io/badge/Built_on-BOT_Chain-4A90E2?style=for-the-badge)](https://botchain.ai)
+[![Built on BOHR Chain](https://img.shields.io/badge/Built_on-BOHR_Chain-00cc99?style=for-the-badge&logo=ethereum)](https://scan.bohr.life)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**Rheon** is a premium, decentralized micropayment and subscription streaming protocol. Built natively for **BOT Chain**, it leverages sub-second Layer 1 block times (~0.75s) and near-zero transaction fees to enable true real-time pay-as-you-go economies.
+**Rheon** is a premium, real-time **Pay-Per-Second payment streaming and escrow protocol** built natively for the high-speed **BOHR Chain EVM L1**. 
+
+Designed specifically for the AI, GPU DePIN, and machine-to-machine Web3 Knowledge Economy, Rheon leverages BOHR Chain’s sub-second block times (~0.75s) and near-zero fees to unlock continuous micropayments with built-in consumer protections, automatic revenue splits, mock DeFi yield generation, and autonomous watchdog overrides.
 
 ---
 
-## 🛑 The Problem
-The current subscription economy is broken, especially for high-frequency micro-transactions like AI API consumption, cloud computing, and real-time gaming:
-1. **Capital Inefficiency:** Users are forced into rigid monthly subscriptions, paying for idle time.
-2. **Trust Deficit:** Pre-paying for AI API credits puts the user at risk if the service goes down.
-3. **Dispute Friction:** Web2 chargebacks take weeks. Web3 lacks native, automated consumer protection for streamed payments.
+## 🛑 The Core Problem
+As AI agents and GPU rendering DePIN networks proliferate, payment systems remain stuck in Web2 models:
+1. **Prepaid Lock-in & Credit Risk:** Users must buy rigid monthly subscriptions or pre-fund API balances, risking losses if the provider suffers an outage or exits.
+2. **Capital Inefficiency:** Millions of dollars sit idle in static balances without generating yield for either payers or receivers.
+3. **Slow Dispute Resolution:** Refunding users for service outages requires human intervention, taking days or weeks to settle.
 
 ## 💡 The Rheon Solution
-Rheon introduces **Trustless Continuous Micro-Streaming**. You don't pay upfront; you stream tokens (like `$USDT`) to the provider *by the second*. 
-
-To guarantee safety, Rheon introduces the **AI Sentry Node**—an off-chain watchdog that constantly monitors the provider's API health. If the AI service drops, the Sentry Node automatically pauses the payment stream on-chain in under 1 second, protecting the user's funds.
-
----
-
-## 🌟 Core Features
-
-- ⚡ **Sub-second Payment Streaming:** Accrue token balances per-second using advanced pro-rata smart contract calculations. Receivers can withdraw their accrued yield instantly, at any time.
-- 🛡️ **AI Sentry Node Override:** A dedicated off-chain monitoring agent constantly health-checks the AI/content provider. If an outage is detected, it fires an auto-pause transaction to the smart contract, halting funds instantly.
-- ⚖️ **DAO Dispute Resolution:** If a user manually disputes a stream, funds are frozen. The Rheon DAO can review the Sentry Node's uptime logs and vote to either refund the user or resume the stream.
-- 💱 **Built-in BDEX Portal:** Users can swap seamlessly between the native gas token (`$BOT`) and streaming tokens (`$USDT`) directly in the dashboard via our automated market maker integration.
-- 🎨 **Premium UX/UI:** A breathtaking, glassmorphic React dashboard providing real-time visual feedback of funds flowing down to the micro-cent.
+Rheon shifts the paradigm from prepaid billing to **real-time micro-streaming escrow**:
+* Users stream `$USDT` **per second** only while compute is actively being delivered.
+* Escrowed funds are routed into a **DeFi Yield Vault** generating interest dynamically.
+* An offchain **AI Sentry Node** acts as a decentralized referee, checking the API health every 3 seconds. If the API goes offline, the Sentry Node automatically calls `pauseStream` onchain in **under 1 second**, freezing the flow of capital instantly.
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## 🏗️ Protocol Architecture
 
-Rheon is a full-stack Web3 application divided into three core pillars:
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Creator as Payer (Creator)
+    participant Streamer as BotFlowStreamer
+    participant Vault as Yield & Lending Pool
+    participant Recipient as AI Provider (Recipient)
+    participant Sentry as AI Sentry Node
 
-1. **Smart Contracts (`/contracts`)**: 
-   - Written in **Solidity** (Hardhat).
-   - Deployed on **BOT Chain Testnet**.
-   - Handles stream creation, real-time balance calculation, pausing, Sentry authorization, and the BDEX routing.
-2. **AI Sentry Node (`/sentry`)**: 
-   - Written in **TypeScript** / Node.js.
-   - Operates as a decentralized bot using `ethers.js` to listen for on-chain events and execute high-speed intervention transactions.
-3. **Frontend Dashboard (`/frontend`)**: 
-   - Built with **React** + **Vite**.
-   - Integrates `ethers.js` for Web3 connectivity and real-time DOM updates to animate the flow of money.
-
-### 📁 Repository Structure
-```text
-Rheon/
-├── contracts/               # Solidity smart contracts
-│   ├── contracts/
-│   │   ├── BotFlowStreamer.sol  # Core protocol logic
-│   │   ├── MockUSDT.sol         # Streamable token
-│   │   └── MockBDEX.sol         # Swap router
-│   ├── test/                # Comprehensive test suite
-│   └── scripts/             # Deployment scripts
-├── sentry/                  # Off-chain AI Sentry Node
-│   └── src/
-│       └── monitor.ts       # Health checking & transaction signing logic
-└── frontend/                # React Web Dashboard
-    ├── src/
-    │   ├── styles/          # Custom CSS & Glassmorphism
-    │   └── App.jsx          # Main application logic
-    └── .env.example         # Required environment variables
+    Creator->>Streamer: Create stream (Lock USDT deposit & set rate)
+    Streamer->>Vault: Route deposit to Yield Vault (5% APY)
+    loop Every 3 seconds
+        Sentry->>Recipient: Healthcheck Ping (Uptime/Latency)
+    end
+    Note over Sentry, Recipient: Outage detected!
+    Sentry->>Streamer: pauseStream() (Onchain Intervention)
+    Streamer->>Vault: Stop yield accrual & freeze withdrawals
 ```
+
+---
+
+## 🌟 Key Features & Innovations
+
+* ⚡ **Pay-Per-Second Micro-Streams:** Pro-rata balance calculations updated on every block. Receivers withdraw accrued earnings in real-time.
+* 🛡️ **Autonomous AI Sentry Node Watchdog:** Constantly monitors AI endpoint latency and uptime. Executes high-speed onchain pause interventions the moment an outage occurs.
+* 🏦 **Yield & Lending Vault:** Locked escrows dynamically generate a targeted **5% APY**. Users can lock native `$BOT` tokens as collateral (150% coverage) to borrow `$USDT` from this vault at a fixed 10% APR.
+* 🏛️ **Decentralized Split Logic:** Streaming revenue is automatically routed onchain: **70%** to the AI Provider, **20%** to the Model Creator, and **10%** to the DAO Treasury.
+* ⚖️ **DAO Dispute Resolution:** Allows manual disputes to be resolved through community onchain votes to issue refunds or release funds.
+* 💱 **Embedded BDEX Portal:** Provides a glassmorphic automated market maker (AMM) swapper directly inside the console to exchange `$BOT` to `$USDT` gaslessly.
+
+---
+
+## 📋 Deployed Contract Registry (BOHR Chain Testnet)
+
+All smart contracts are deployed and verified on the BOHR Chain block explorer:
+
+| Contract Name | Address | Explorer Link |
+| :--- | :--- | :--- |
+| **BotFlowStreamer (Core)** | `0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204` | [Verify on BohrScan](https://scan.bohr.life/address/0x93dEa3e3Ab76cbD15FcB7703170Ed37391f42204) |
+| **BotFlowReceipt (ERC-721 NFT)** | `0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9` | [Verify on BohrScan](https://scan.bohr.life/address/0x8dd6165328d653aff0b68B78C3F3a9734b365Ad9) |
+| **Mock USDT Token** | `0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6` | [Verify on BohrScan](https://scan.bohr.life/address/0xa00D072A5A060f48Aa2aF79700a1FaA4140141c6) |
+| **Bohr DEX Router** | `0xD6425a02f0845B8D99e349C34D2E7A576E177345` | [Verify on BohrScan](https://scan.bohr.life/address/0xD6425a02f0845B8D99e349C34D2E7A576E177345) |
+| **Yield & Lending Vault** | `0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879` | [Verify on BohrScan](https://scan.bohr.life/address/0xCBf8cF8F5cAc904b1fb37379E225F02126DDe879) |
 
 ---
 
 ## 🚀 Quickstart Guide for Judges
 
-### 1. Network Configuration
-Add BOT Chain Testnet to your Web3 Wallet (MetaMask, Rabby):
-- **Network Name**: BOT Chain
-- **RPC URL**: `https://rpc.botchain.ai`
-- **Chain ID**: `677`
-- **Currency Symbol**: `BOT`
-- **Explorer**: `https://scan.botchain.ai`
+### 1. Configure Wallet (BOHR Chain Testnet)
+Add BOHR Chain Testnet manually to MetaMask/Rabby:
+* **Network Name:** BOHR Chain Testnet
+* **RPC URL:** `https://rpc.bohr.life`
+* **Chain ID:** `968`
+* **Currency Symbol:** `BOT`
+* **Block Explorer:** `https://scan.bohr.life/`
 
-### 2. Installation
-Clone the repository and install all dependencies:
+### 2. Setup the Repository
+Clone the repository and install dependencies at the root workspace:
 ```bash
 git clone https://github.com/mrnetwork0001/BOTflow.git
 cd BOTflow
-npm run bootstrap
+npm install
 ```
 
-### 3. Smart Contracts (Optional: If you want to redeploy)
-```bash
-cd contracts
-npm run compile
-npm run deploy # Requires PRIVATE_KEY in .env
-```
-
-### 4. Start the AI Sentry Node
-The Sentry Node acts as the automated referee.
+### 3. Start the AI Sentry Node
+The Sentry Node acts as the automated network watchdog:
 ```bash
 cd sentry
 cp .env.example .env
-# Ensure SENTRY_PRIVATE_KEY and TARGET_API_HEALTH_URL are set
-npm start
-```
-
-### 5. Launch the Frontend
-```bash
-cd frontend
-cp .env.example .env
-# Fill in contract addresses if you deployed fresh, otherwise use defaults
+# Set SENTRY_PRIVATE_KEY and TARGET_API_HEALTH_URL
+npm install
 npm run dev
 ```
-Open `http://localhost:3000` (or the port specified by Vite) in your browser.
+
+### 4. Run the Frontend App
+Launch the Vite React dashboard console:
+```bash
+cd ../frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+Open `http://localhost:3000` to start exploring the console. Use the **Docs** tab inside the dashboard to view technical walk-throughs!
 
 ---
 
-## 🤖 AI Sentry Integration Details
-In the dashboard:
-- Create a stream, choose the flow rate, and specify your **Sentry Node Address**.
-- Watch the **Live Flow Ticker** count up by milliseconds.
-- The off-chain **AI Sentry Node** continually polls your configured `TARGET_API_HEALTH_URL` (e.g. OpenAI's status page).
-- If the provider suffers an outage or the ping times out, the Sentry Node detects the failure instantly, signs a pause transaction, and submits it to BOT Chain. Within **~0.75 seconds**, the stream is automatically paused on-chain, halting token transfers immediately and protecting the user's funds.
-
----
-
-## 🎯 Use Cases
-
-- **AI API Gateways:** Stream payments per LLM token generated instead of buying rigid credit packs.
-- **Cloud Infrastructure:** Pay for AWS/GCP server uptime by the second; stop paying the millisecond the server goes down.
-- **Freelance Escrow:** Stream a salary to a contractor block-by-block. Pause immediately if work stops.
-- **Web3 Gaming:** Stream tokens to play premium game instances, automatically terminating access when the stream stops.
-
----
-
-## 🛣️ Future Roadmap
-
-- **Multi-Chain Expansion:** Deploying cross-chain Sentry nodes to manage streams across Ethereum, Base, and Arbitrum.
-- **Decentralized Sentry Network:** Transitioning from a single Sentry Node to a decentralized oracle network (DON) for trustless consensus on API uptime.
-- **Dynamic Rate Adjustments:** Allowing the Sentry node to automatically throttle the payment rate based on API latency (e.g., paying less if the AI response is slow).
-
----
-*Built with ❤️ for the BOT Chain Ecosystem.*
+*Built with ❤️ for the BOHR Chain Hackathon.*

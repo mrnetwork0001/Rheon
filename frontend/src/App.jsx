@@ -587,7 +587,7 @@ function App() {
       }
       setStreams(fetchedStreams);
 
-      // Fetch yield vault details on-chain
+      // Fetch yield vault details onchain
       let currentVaultAddr = vaultAddr;
       if (!currentVaultAddr) {
         try {
@@ -1277,14 +1277,14 @@ function App() {
       showTxStatus("DAO Vote", "pending", txVote.hash);
       await txVote.wait();
       
-      addSentryLog("INFO", `Vote registered. Executing resolution on-chain...`);
+      addSentryLog("INFO", `Vote registered. Executing resolution onchain...`);
       showTxStatus("Execute DAO Resolution", "signing");
       const txExec = await daoContract.executeResolution(id);
       showTxStatus("Execute DAO Resolution", "pending", txExec.hash);
       await txExec.wait();
       showTxStatus("DAO Resolution", "success", txExec.hash);
       
-      addSentryLog("INFO", `DAO Resolution executed! Dispute resolved on-chain.`);
+      addSentryLog("INFO", `DAO Resolution executed! Dispute resolved onchain.`);
       await fetchRealtimeData();
     } catch (err) {
       console.error(err);
@@ -1475,7 +1475,7 @@ function App() {
               </div>
               <h3 className="feature-title">Decentralized Dispute DAO</h3>
               <p className="feature-desc">
-                Freeze rogue streams and submit them to the community DAO for a fully on-chain resolution and refund vote.
+                Freeze rogue streams and submit them to the community DAO for a fully onchain resolution and refund vote.
               </p>
             </div>
           </div>
@@ -1523,7 +1523,7 @@ function App() {
               <div style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>01 / Core Stream Mechanics</div>
               <h4 style={{ color: '#fff', fontSize: '1.2rem' }}>70/20/10 Automatic Splits</h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                When you stream USDT to an AI Agent, payments are divided every second on-chain: 
+                When you stream USDT to an AI Agent, payments are divided every second onchain: 
                 <strong style={{ color: '#fff' }}> 70% </strong> goes to the server host (AI Provider) for compute power, 
                 <strong style={{ color: '#fff' }}> 20% </strong> goes to the model developer as automated royalties, and 
                 <strong style={{ color: '#fff' }}> 10% </strong> accumulates in the Rheon DAO Treasury.
@@ -1534,7 +1534,7 @@ function App() {
               <div style={{ fontSize: '1.5rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)', fontWeight: 'bold' }}>02 / Outage Protection</div>
               <h4 style={{ color: '#fff', fontSize: '1.2rem' }}>VPS Sentry Nodes</h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                To prevent paying for dead compute, users host a Sentry Node (watcher script) on their VPS. It constantly pings the AI agent. If the server drops offline, the Sentry pauses your payment stream on-chain instantly, protecting your funds.
+                To prevent paying for dead compute, users host a Sentry Node (watcher script) on their VPS. It constantly pings the AI agent. If the server drops offline, the Sentry pauses your payment stream onchain instantly, protecting your funds.
               </p>
             </div>
 
@@ -1552,7 +1552,7 @@ function App() {
         <div className="cta-banner">
           <div className="cta-content">
             <h2 className="cta-title">Ready to launch your streaming channel?</h2>
-            <p className="cta-desc">Experience real-time sub-second on-chain transactions today on BOT Chain.</p>
+            <p className="cta-desc">Experience real-time sub-second onchain transactions today on BOT Chain.</p>
             <button className="btn btn-primary btn-lg" onClick={() => setView("app")}>
               Launch Console
             </button>
@@ -1704,7 +1704,7 @@ function App() {
             </span>
           </div>
           <div className="metric-card">
-            <span className="metric-label">DeFi Vault TVL (On-Chain)</span>
+            <span className="metric-label">DeFi Vault TVL (Onchain)</span>
             <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
               {vaultBalance} USDT
             </span>
@@ -1819,7 +1819,7 @@ function App() {
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    Locked Balance in Vault (On-Chain)
+                    Locked Balance in Vault (Onchain)
                     <span style={{ fontSize: '0.65rem', background: 'var(--accent-cyan)', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '1rem', fontWeight: 'bold' }}>DeFi Vault Active</span>
                   </span>
                   <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-primary)' }}>{currentActiveStream.remainingBalance} USDT</span>
@@ -2553,8 +2553,8 @@ function App() {
                   <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
                     <li><strong>Continuous Health Checks:</strong> The Sentry Node pings the AI provider's API endpoint every 3 seconds to monitor uptime and latency.</li>
                     <li><strong>Outage Detection:</strong> If the API returns a non-200 error code or times out, the Sentry Node flags a service outage.</li>
-                    <li><strong>Automated Intervention:</strong> The Sentry Node signs a transaction calling <code>pauseStream</code> on-chain, pausing the stream immediately. This protects the payer from paying for offline AI models.</li>
-                    <li><strong>Dispute Resolution:</strong> If a dispute is raised, the Rheon DAO executes votes on-chain to decide whether to refund the sender or release funds.</li>
+                    <li><strong>Automated Intervention:</strong> The Sentry Node signs a transaction calling <code>pauseStream</code> onchain, pausing the stream immediately. This protects the payer from paying for offline AI models.</li>
+                    <li><strong>Dispute Resolution:</strong> If a dispute is raised, the Rheon DAO executes votes onchain to decide whether to refund the sender or release funds.</li>
                   </ul>
                 </div>
               )}
@@ -2957,7 +2957,7 @@ function App() {
                 </div>
                 <h4 style={{ color: 'var(--state-success)', marginBottom: '0.75rem' }}>Transaction Confirmed!</h4>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Your transaction has been finalized on-chain.
+                  Your transaction has been finalized onchain.
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {txModal.txHash && (
@@ -3095,7 +3095,7 @@ function App() {
 
             {/* Info Box */}
             <div style={{ background: 'rgba(0, 242, 254, 0.03)', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: '1.4', marginBottom: '1.5rem' }}>
-              💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to Mock DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second on-chain.
+              💡 <strong>Rheon PayFi Stream:</strong> Locked deposits route to Mock DeFi Yield Vaults at 5% APY. Receivers withdraw accrued yield per-second onchain.
             </div>
 
             {/* Actions for active stream */}

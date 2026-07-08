@@ -109,7 +109,7 @@ async function startSentryNode() {
       // Outage or dispute detected! AI Sentry intervenes
       for (const streamId of activeMonitoredStreams) {
         try {
-          addLog("WARNING", `Outage/Dispute detected for stream ${streamId}! Initiating AI Sentry on-chain intervention...`);
+          addLog("WARNING", `Outage/Dispute detected for stream ${streamId}! Initiating AI Sentry onchain intervention...`);
 
           if (contract && wallet) {
             // Check if already paused first to avoid redundant transactions
@@ -137,7 +137,7 @@ async function startSentryNode() {
               addLog("INFO", `Stream ${streamId} is already paused. Monitoring continues.`);
             }
           } else {
-            addLog("ACTION", `[DRY-RUN] Would have paused stream ${streamId} on-chain.`);
+            addLog("ACTION", `[DRY-RUN] Would have paused stream ${streamId} onchain.`);
           }
         } catch (error: any) {
           addLog("ERROR", `Intervention failed for stream ${streamId}: ${error.message}`);
@@ -154,25 +154,25 @@ async function startSentryNode() {
         if (wallet && sentryNode.toLowerCase() === wallet.address.toLowerCase()) {
           const id = Number(streamId);
           activeMonitoredStreams.add(id);
-          addLog("INFO", `On-chain Event: StreamCreated. Added stream ${id} (Receiver: ${receiver}) to active Sentry monitoring list.`);
+          addLog("INFO", `Onchain Event: StreamCreated. Added stream ${id} (Receiver: ${receiver}) to active Sentry monitoring list.`);
         }
       });
 
       contract.on("StreamPaused", (streamId, by) => {
-        addLog("INFO", `On-chain Event: Stream ${streamId} paused by ${by}.`);
+        addLog("INFO", `Onchain Event: Stream ${streamId} paused by ${by}.`);
       });
 
       contract.on("StreamResumed", (streamId, by, newStopTime) => {
-        addLog("INFO", `On-chain Event: Stream ${streamId} resumed by ${by}.`);
+        addLog("INFO", `Onchain Event: Stream ${streamId} resumed by ${by}.`);
       });
 
       contract.on("StreamCancelled", (streamId, receiverAmount, senderAmount) => {
         const id = Number(streamId);
         activeMonitoredStreams.delete(id);
-        addLog("INFO", `On-chain Event: Stream ${id} cancelled. Removed from Sentry monitoring.`);
+        addLog("INFO", `Onchain Event: Stream ${id} cancelled. Removed from Sentry monitoring.`);
       });
     } catch (err: any) {
-      addLog("ERROR", `Failed to set up on-chain event listeners: ${err.message}`);
+      addLog("ERROR", `Failed to set up onchain event listeners: ${err.message}`);
     }
   }
 
