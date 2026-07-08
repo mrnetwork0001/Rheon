@@ -763,8 +763,8 @@ function App() {
           ], tempProvider);
           
           const latestBlock = await tempProvider.getBlockNumber();
-          // Query last 10000 blocks to prevent timeouts
-          const fromBlock = Math.max(0, latestBlock - 10000);
+          // Query from block 1 to catch all historical swaps on testnet
+          const fromBlock = 1;
           const filter = pairContract.filters.Swap();
           const logs = await pairContract.queryFilter(filter, fromBlock, "latest");
           
