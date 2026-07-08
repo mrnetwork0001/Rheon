@@ -1223,6 +1223,19 @@ footer {
   box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);
 }
 
+@media (max-width: 768px) {
+  .dashboard-toggle {
+    width: 100%;
+    max-width: 480px;
+  }
+  .dashboard-toggle button {
+    flex: 1;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+    border-radius: 20px;
+  }
+}
+
 /* Dashboard Metrics Styles */
 .dashboard-metrics {
   display: grid;
