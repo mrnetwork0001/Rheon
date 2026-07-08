@@ -56,6 +56,7 @@ async function startSentryNode() {
   let provider: ethers.JsonRpcProvider;
   let wallet: ethers.Wallet | null = null;
   let contract: ethers.Contract | null = null;
+  let lastCheckedBlock = 0;
 
   try {
     provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -66,6 +67,13 @@ async function startSentryNode() {
       if (STREAMER_CONTRACT_ADDRESS) {
         contract = new ethers.Contract(STREAMER_CONTRACT_ADDRESS, STREAMER_ABI, wallet);
         addLog("INFO", `Watching BotFlowStreamer at: ${STREAMER_CONTRACT_ADDRESS}`);
+        
+        try {
+          lastCheckedBlock = await provider.getBlockNumber();
+          addLog("INFO", `Event log listener initialized starting at block ${lastCheckedBlock}`);
+        } catch (blockErr: any) {
+          addLog("WARNING", `Could not fetch starting block number, defaulting to 0: ${blockErr.message}`);
+        }
       } else {
         addLog("WARNING", "STREAMER_CONTRACT_ADDRESS not configured. Running in dry-run monitoring mode.");
       }
@@ -146,34 +154,59 @@ async function startSentryNode() {
     }
   }, 4000); // Check every 4 seconds
 
-  // Listen to contract events if available
+  // Poll new events periodically using standard queryFilter log scanning (bypasses RPC filter limits)
   if (contract) {
-    try {
-      contract.on("StreamCreated", (streamId, sender, receiver, token, deposit, ratePerSecond, startTime, stopTime, sentryNode) => {
-        // If this stream uses our sentry, add to monitored list
-        if (wallet && sentryNode.toLowerCase() === wallet.address.toLowerCase()) {
-          const id = Number(streamId);
-          activeMonitoredStreams.add(id);
-          addLog("INFO", `Onchain Event: StreamCreated. Added stream ${id} (Receiver: ${receiver}) to active Sentry monitoring list.`);
+    setInterval(async () => {
+      try {
+        const currentBlock = await provider.getBlockNumber();
+        if (currentBlock <= lastCheckedBlock) return;
+
+        const fromBlock = lastCheckedBlock + 1;
+        const toBlock = currentBlock;
+
+        // Query StreamCreated events
+        const createdFilter = contract.filters.StreamCreated();
+        const createdEvents = await contract.queryFilter(createdFilter, fromBlock, toBlock);
+        for (const event of createdEvents) {
+          const [streamId, sender, receiver, token, deposit, ratePerSecond, startTime, stopTime, sentryNode] = (event as any).args;
+          if (wallet && sentryNode.toLowerCase() === wallet.address.toLowerCase()) {
+            const id = Number(streamId);
+            activeMonitoredStreams.add(id);
+            addLog("INFO", `Onchain Event (Log Polled): StreamCreated. Added stream ${id} (Receiver: ${receiver}) to Sentry monitoring list.`);
+          }
         }
-      });
 
-      contract.on("StreamPaused", (streamId, by) => {
-        addLog("INFO", `Onchain Event: Stream ${streamId} paused by ${by}.`);
-      });
+        // Query StreamPaused events
+        const pausedFilter = contract.filters.StreamPaused();
+        const pausedEvents = await contract.queryFilter(pausedFilter, fromBlock, toBlock);
+        for (const event of pausedEvents) {
+          const [streamId, by] = (event as any).args;
+          addLog("INFO", `Onchain Event (Log Polled): Stream ${streamId} paused by ${by}.`);
+        }
 
-      contract.on("StreamResumed", (streamId, by, newStopTime) => {
-        addLog("INFO", `Onchain Event: Stream ${streamId} resumed by ${by}.`);
-      });
+        // Query StreamResumed events
+        const resumedFilter = contract.filters.StreamResumed();
+        const resumedEvents = await contract.queryFilter(resumedFilter, fromBlock, toBlock);
+        for (const event of resumedEvents) {
+          const [streamId, by] = (event as any).args;
+          addLog("INFO", `Onchain Event (Log Polled): Stream ${streamId} resumed by ${by}.`);
+        }
 
-      contract.on("StreamCancelled", (streamId, receiverAmount, senderAmount) => {
-        const id = Number(streamId);
-        activeMonitoredStreams.delete(id);
-        addLog("INFO", `Onchain Event: Stream ${id} cancelled. Removed from Sentry monitoring.`);
-      });
-    } catch (err: any) {
-      addLog("ERROR", `Failed to set up onchain event listeners: ${err.message}`);
-    }
+        // Query StreamCancelled events
+        const cancelledFilter = contract.filters.StreamCancelled();
+        const cancelledEvents = await contract.queryFilter(cancelledFilter, fromBlock, toBlock);
+        for (const event of cancelledEvents) {
+          const [streamId] = (event as any).args;
+          const id = Number(streamId);
+          activeMonitoredStreams.delete(id);
+          addLog("INFO", `Onchain Event (Log Polled): Stream ${id} cancelled. Removed from Sentry monitoring.`);
+        }
+
+        lastCheckedBlock = toBlock;
+      } catch (err: any) {
+        addLog("WARNING", `Error polling for contract events: ${err.message}`);
+      }
+    }, 10000); // Check for new events every 10 seconds
   }
 
   // Create local HTTP Control Server for UI feedback and simulation
