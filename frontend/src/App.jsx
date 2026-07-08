@@ -47,7 +47,8 @@ const STREAMER_ABI = [
   "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
   "function nextStreamId() view returns (uint256)",
   "function daoContract() view returns (address)",
-  "function yieldVault() view returns (address)"
+  "function yieldVault() view returns (address)",
+  "function receiptNFT() view returns (address)"
 ];
 
 const DAO_ABI = [
@@ -309,6 +310,7 @@ function App() {
   // Hardcoded for demo: assumes DAO deployed right after Streamer at a nearby nonce
   const [daoAddr, setDaoAddr] = useState("");
   const [vaultAddr, setVaultAddr] = useState("");
+  const [receiptNftAddr, setReceiptNftAddr] = useState("");
   const [vaultBalance, setVaultBalance] = useState("0.00");
   // Balance states
   const [botBalance, setBotBalance] = useState("0.0");
@@ -592,6 +594,16 @@ function App() {
           setVaultAddr(currentVaultAddr);
         } catch (err) {
           console.error("Failed to fetch yield vault address:", err);
+        }
+      }
+
+      let currentReceiptNftAddr = receiptNftAddr;
+      if (!currentReceiptNftAddr) {
+        try {
+          currentReceiptNftAddr = await streamerContract.receiptNFT();
+          setReceiptNftAddr(currentReceiptNftAddr);
+        } catch (err) {
+          console.error("Failed to fetch receipt NFT address:", err);
         }
       }
       if (currentVaultAddr) {
@@ -2462,7 +2474,7 @@ function App() {
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <a 
-                href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedReceiptStream.id}`} 
+                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}?a=${selectedReceiptStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
@@ -2718,7 +2730,7 @@ function App() {
                 Close
               </button>
               <a 
-                href={`https://scan.bohr.life/token/${streamerAddr}?a=${selectedDetailStream.id}`} 
+                href={`https://scan.bohr.life/token/${receiptNftAddr || streamerAddr}?a=${selectedDetailStream.id}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
