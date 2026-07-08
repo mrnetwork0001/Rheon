@@ -1443,3 +1443,20 @@ footer {
 .copy-btn-hover:active {
   transform: translateY(0);
 }
+
+/* --- DOCUMENTATION PAGE MOBILE DROPDOWN Nav --- */
+.docs-mobile-nav {
+  display: none;
+}
+.docs-desktop-nav {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .docs-mobile-nav {
+    display: block;
+  }
+  .docs-desktop-nav {
+    display: none;
+  }
+}

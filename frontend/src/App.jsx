@@ -2387,8 +2387,42 @@ function App() {
 
       {dashboardView === "docs" && (
         <div className="docs-container" style={{ animation: 'fadeInSlideUp 0.3s ease-out' }}>
-          {/* Sidebar */}
-          <div className="glass-card" style={{ padding: '1.5rem', height: 'fit-content' }}>
+          {/* Mobile Navigation Dropdown */}
+          <div className="docs-mobile-nav">
+            <select 
+              value={activeDocTab} 
+              onChange={e => setActiveDocTab(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '1rem 1.25rem',
+                borderRadius: '12px',
+                background: 'rgba(13, 15, 26, 0.7)',
+                border: '1px solid var(--glass-border)',
+                color: '#fff',
+                fontSize: '0.95rem',
+                fontFamily: 'var(--font-family-mono)',
+                cursor: 'pointer',
+                outline: 'none',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='cyan' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 1.25rem center',
+                backgroundSize: '1.25rem',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                backdropFilter: 'blur(10px)',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value={0} style={{ background: '#0d0f1a', color: '#fff' }}>1. Protocol Overview</option>
+              <option value={1} style={{ background: '#0d0f1a', color: '#fff' }}>2. System Architecture</option>
+              <option value={2} style={{ background: '#0d0f1a', color: '#fff' }}>3. Lending & Yield Pool</option>
+              <option value={3} style={{ background: '#0d0f1a', color: '#fff' }}>4. AI Sentry Node Mechanics</option>
+              <option value={4} style={{ background: '#0d0f1a', color: '#fff' }}>5. Developer Stack</option>
+            </select>
+          </div>
+
+          {/* Desktop Sidebar Navigation */}
+          <div className="docs-desktop-nav glass-card" style={{ padding: '1.5rem', height: 'fit-content' }}>
             <h4 style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '1.25rem', paddingLeft: '0.5rem', fontWeight: 'bold' }}>Rheon Documentation</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
