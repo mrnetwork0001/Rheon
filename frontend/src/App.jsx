@@ -788,7 +788,7 @@ function App() {
       
       const finalUsers = uniqueUsers.size;
       const finalSettled = totalSettled;
-      const finalSwap = onchainSwapVolume + localSwapVol;
+      const finalSwap = onchainSwapVolume;
       const finalRevenue = finalSettled * 0.005;
       
       setMockStats({
@@ -1620,7 +1620,6 @@ function App() {
           </div>
           {!account ? (
             <button className="btn btn-connect" onClick={() => { connectWallet(); setShowMobileMenu(false); }} disabled={loading}>
-              <Zap size={16} />
               Connect BOT Wallet
             </button>
           ) : (
