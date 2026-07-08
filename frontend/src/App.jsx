@@ -2574,7 +2574,7 @@ function App() {
 
       {showDetailModal && selectedDetailStream && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1050 }}>
-          <div className="glass-card" style={{ maxWidth: '460px', width: '92%', padding: '2rem', borderRadius: '24px', textAlign: 'center', color: 'var(--color-text-primary)', border: '1px solid var(--glass-border)', boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0, 242, 254, 0.1)', animation: 'walletFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)', position: 'relative' }}>
+          <div className="glass-card" style={{ maxWidth: '460px', width: '92%', padding: '2rem 1rem', borderRadius: '24px', textAlign: 'center', color: 'var(--color-text-primary)', border: '1px solid var(--glass-border)', boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0, 242, 254, 0.1)', animation: 'walletFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)', position: 'relative' }}>
             <button 
               style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '1.5rem', fontWeight: 'bold' }} 
               onClick={() => { setShowDetailModal(false); setSelectedDetailStream(null); }}
@@ -2686,10 +2686,10 @@ function App() {
             )}
 
             {/* Bottom main action buttons */}
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button 
                 className="btn btn-secondary" 
-                style={{ flex: 1, fontSize: '0.85rem', borderRadius: '50px', height: '44px' }} 
+                style={{ flex: 1, fontSize: '0.85rem', borderRadius: '50px', height: '44px', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }} 
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedDetailStream(null);
@@ -2702,9 +2702,9 @@ function App() {
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-primary" 
-                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem', borderRadius: '50px', height: '44px', fontWeight: 'bold' }}
+                style={{ flex: 1, textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', borderRadius: '50px', height: '44px', fontWeight: 'bold', padding: '0.75rem 0.25rem', whiteSpace: 'nowrap' }}
               >
-                Verify on BohrScan ↗
+                Verify on BohrScan
               </a>
             </div>
 
