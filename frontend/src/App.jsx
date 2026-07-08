@@ -365,10 +365,10 @@ function App() {
   const [selectedDetailStream, setSelectedDetailStream] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [outgoingPage, setOutgoingPage] = useState(1);
-  const [toast, setToast] = useState({ show: false, message: "" });
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: "" }), 2500);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3500);
   };
 
   // Yield & Lending Pool states
@@ -436,7 +436,7 @@ function App() {
   // Connect MetaMask and enforce BOT Chain Testnet
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert("MetaMask is not installed. Please install it to use Rheon.");
+      showToast("MetaMask is not installed. Please install it to use Rheon.", "error");
       return;
     }
     try {
@@ -466,13 +466,13 @@ function App() {
             });
           } catch (addError) {
             console.error(addError);
-            alert("Failed to add BOT Chain Testnet. Please add it manually.");
+            showToast("Failed to add BOT Chain Testnet. Please add it manually.", "error");
             setLoading(false);
             return;
           }
         } else {
           console.error(switchError);
-          alert("You must switch to the BOT Chain Testnet to use Rheon.");
+          showToast("You must switch to the BOT Chain Testnet to use Rheon.", "error");
           setLoading(false);
           return;
         }
@@ -483,7 +483,7 @@ function App() {
       const net = await web3Provider.getNetwork();
       
       if (net.chainId !== 968n && net.chainId !== 968 && Number(net.chainId) !== 968) {
-        alert("Please switch your wallet to BOT Chain Testnet (Chain ID 968) to proceed.");
+        showToast("Please switch your wallet to BOT Chain Testnet (Chain ID 968) to proceed.", "error");
         setLoading(false);
         return;
       }
@@ -700,7 +700,7 @@ function App() {
       setForceOutage(data.forceOutageMode);
       addSentryLog("WARNING", `Outage Simulation toggled: ${data.forceOutageMode ? "ON" : "OFF"}`);
     } catch (err) {
-      alert("Failed to connect to Sentry Node. Is it running on port 4000?");
+      showToast("Failed to connect to Sentry Node. Is it running on port 4000?", "error");
     }
   };
 
@@ -849,12 +849,12 @@ function App() {
     const rateVal = parseFloat(newStream.rate);
 
     if (isNaN(depVal) || isNaN(rateVal) || depVal <= 0 || rateVal <= 0) {
-      alert("Invalid deposit or stream rate");
+      showToast("Invalid deposit or stream rate", "error");
       return;
     }
 
     if (depVal > parseFloat(usdtBalance)) {
-      alert("Insufficient USDT balance. You must have at least the initial deposit amount in your wallet.");
+      showToast("Insufficient USDT balance. You must have at least the initial deposit amount in your wallet.", "error");
       return;
     }
 
@@ -927,11 +927,11 @@ function App() {
     if (isNaN(amount) || amount <= 0) return;
 
     if (swapFrom === "BOT" && amount > parseFloat(botBalance)) {
-      alert("Insufficient BOT balance for this swap.");
+      showToast("Insufficient BOT balance for this swap.", "error");
       return;
     }
     if (swapFrom === "USDT" && amount > parseFloat(usdtBalance)) {
-      alert("Insufficient USDT balance for this swap.");
+      showToast("Insufficient USDT balance for this swap.", "error");
       return;
     }
 
@@ -1152,7 +1152,7 @@ function App() {
       const currentAccrued = calculateAccrued(str);
       const claimable = currentAccrued - str.withdrawn;
       if (claimable <= 0.01) {
-        alert("Nothing accrued to withdraw yet");
+        showToast("Nothing accrued to withdraw yet", "warning");
         return;
       }
       
@@ -2736,10 +2736,10 @@ function App() {
           position: 'fixed',
           bottom: '2rem',
           right: '2rem',
-          background: 'rgba(13, 15, 26, 0.85)',
+          background: 'rgba(13, 15, 26, 0.9)',
           backdropFilter: 'blur(12px)',
-          border: '1px solid var(--accent-cyan)',
-          boxShadow: '0 8px 32px rgba(0, 242, 254, 0.25)',
+          border: toast.type === 'error' ? '1px solid var(--state-error)' : toast.type === 'warning' ? '1px solid var(--state-warning)' : '1px solid var(--accent-cyan)',
+          boxShadow: toast.type === 'error' ? '0 8px 32px rgba(255, 59, 48, 0.25)' : toast.type === 'warning' ? '0 8px 32px rgba(255, 179, 0, 0.25)' : '0 8px 32px rgba(0, 242, 254, 0.25)',
           padding: '1rem 1.5rem',
           borderRadius: '12px',
           color: '#fff',
@@ -2751,7 +2751,13 @@ function App() {
           zIndex: 9999,
           animation: 'fadeInSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}>
-          <Check size={16} style={{ color: 'var(--state-success)' }} />
+          {toast.type === 'error' ? (
+            <ShieldAlert size={16} style={{ color: 'var(--state-error)' }} />
+          ) : toast.type === 'warning' ? (
+            <AlertTriangle size={16} style={{ color: 'var(--state-warning)' }} />
+          ) : (
+            <Check size={16} style={{ color: 'var(--state-success)' }} />
+          )}
           <span>{toast.message}</span>
         </div>
       )}
