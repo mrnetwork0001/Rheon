@@ -26,7 +26,7 @@ import { ethers } from 'ethers';
 
 // Fallback configuration
 const DEFAULT_RPC = "https://rpc.botchain.ai";
-const SENTRY_API_URL = "http://localhost:4000";
+const SENTRY_API_URL = import.meta.env.VITE_SENTRY_SERVER_URL || "http://localhost:4000";
 
 // Mock ABI for minimal interactions
 const ERC20_ABI = [
