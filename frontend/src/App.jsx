@@ -883,7 +883,28 @@ function App() {
       for (let i = 0; i < results.length; i++) {
         const s = results[i];
         if (s.isActive || s.withdrawnAmount > 0n) {
-          totalSettled += parseFloat(ethers.formatUnits(s.withdrawnAmount, 6));
+          let streamVolume = 0;
+          if (!s.isActive) {
+            streamVolume = parseFloat(ethers.formatUnits(s.withdrawnAmount, 6));
+          } else {
+            let accrued = s.accruedUntilLastUpdate;
+            if (!s.isPaused) {
+              let endTime = BigInt(Math.floor(Date.now() / 1000));
+              if (endTime > s.stopTime) {
+                endTime = s.stopTime;
+              }
+              if (endTime > s.lastUpdateTime) {
+                const timePassed = endTime - s.lastUpdateTime;
+                accrued += timePassed * s.ratePerSecond;
+              }
+            }
+            if (accrued > s.deposit) {
+              accrued = s.deposit;
+            }
+            streamVolume = parseFloat(ethers.formatUnits(accrued, 6));
+          }
+          
+          totalSettled += streamVolume;
           uniqueUsers.add(s.sender.toLowerCase());
           for (const r of s.receivers) {
             uniqueUsers.add(r.toLowerCase());
