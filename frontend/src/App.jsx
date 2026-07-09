@@ -2101,8 +2101,15 @@ function App() {
                     <div 
                       key={stream.id} 
                       className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${isStreamCompleted(stream) ? 'depleted' : ''}`}
-                      onClick={() => !isStreamCompleted(stream) && setActiveStreamId(stream.id)}
-                      style={{ cursor: !isStreamCompleted(stream) ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (!isStreamCompleted(stream)) {
+                          setActiveStreamId(stream.id);
+                        } else {
+                          setSelectedDetailStream(stream);
+                          setShowDetailModal(true);
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
                     >
                       <div className="stream-info">
                         <span className="stream-party">
@@ -3361,38 +3368,52 @@ function App() {
             {/* Actions for active stream */}
             {selectedDetailStream.isActive && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                {(!isStreamCompleted(selectedDetailStream)) ? (
-                  <>
+                {dashboardView === "creator" ? (
+                  // Creator view actions
+                  (!isStreamCompleted(selectedDetailStream)) ? (
+                    <>
+                      <button 
+                        className="btn btn-secondary"
+                        style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                        onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
+                      >
+                        {selectedDetailStream.isPaused ? "Resume" : "Pause"}
+                      </button>
+                      <button 
+                        className="btn btn-danger"
+                        style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                        onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                      >
+                        Cancel Stream
+                      </button>
+                      <button 
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', border: '1px solid var(--state-warning)', color: 'var(--state-warning)', background: 'transparent' }}
+                        onClick={() => { handleDisputeStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                      >
+                        Dispute
+                      </button>
+                    </>
+                  ) : (
                     <button 
-                      className="btn btn-secondary"
-                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
-                      onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
-                    >
-                      {selectedDetailStream.isPaused ? "Resume" : "Pause"}
-                    </button>
-                    <button 
-                      className="btn btn-danger"
-                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                      className="btn btn-primary"
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 1rem' }}
                       onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
                     >
-                      Cancel Stream
+                      Finalize & Close Stream (Mint NFT Receipt)
                     </button>
-                    <button 
-                      className="btn"
-                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', border: '1px solid var(--state-warning)', color: 'var(--state-warning)', background: 'transparent' }}
-                      onClick={() => { handleDisputeStream(selectedDetailStream.id); setShowDetailModal(false); }}
-                    >
-                      Dispute
-                    </button>
-                  </>
+                  )
                 ) : (
-                  <button 
-                    className="btn btn-primary"
-                    style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 1rem' }}
-                    onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
-                  >
-                    Finalize & Close Stream (Mint NFT Receipt)
-                  </button>
+                  // Receiver (Provider) view actions
+                  selectedDetailStream.withdrawn < selectedDetailStream.deposit && (
+                    <button 
+                      className="btn btn-primary"
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+                      onClick={() => { handleWithdraw(selectedDetailStream.id); setShowDetailModal(false); }}
+                    >
+                      Withdraw Remaining Yield (${(selectedDetailStream.deposit - selectedDetailStream.withdrawn).toFixed(4)} USDT)
+                    </button>
+                  )
                 )}
               </div>
             )}
