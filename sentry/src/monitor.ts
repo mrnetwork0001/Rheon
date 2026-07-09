@@ -71,6 +71,22 @@ async function startSentryNode() {
         try {
           lastCheckedBlock = await provider.getBlockNumber();
           addLog("INFO", `Event log listener initialized starting at block ${lastCheckedBlock}`);
+          
+          // Historical streams scanner
+          try {
+            const nextId = await contract.nextStreamId();
+            const totalStreams = Number(nextId) - 1;
+            addLog("INFO", `Scanning ${totalStreams} historical streams on startup...`);
+            for (let i = 1; i <= totalStreams; i++) {
+              const streamData = await contract.getStream(i);
+              if (streamData.isActive && streamData.sentryNode.toLowerCase() === wallet.address.toLowerCase()) {
+                activeMonitoredStreams.add(i);
+                addLog("INFO", `Added active stream ${i} from historical scan to Sentry monitoring list.`);
+              }
+            }
+          } catch (scanErr: any) {
+            addLog("WARNING", `Error scanning historical streams: ${scanErr.message}`);
+          }
         } catch (blockErr: any) {
           addLog("WARNING", `Could not fetch starting block number, defaulting to 0: ${blockErr.message}`);
         }
