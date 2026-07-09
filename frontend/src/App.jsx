@@ -1219,6 +1219,12 @@ function App() {
     }
   };
 
+  // Helper to determine if a stream has naturally completed or is depleted/cancelled
+  const isStreamCompleted = (stream) => {
+    if (!stream) return true;
+    return !stream.isActive || stream.withdrawn >= stream.deposit || Date.now() >= stream.stopTime;
+  };
+
   // Accrual math helper
   const calculateAccrued = (stream) => {
     if (!stream.isActive) return 0;
@@ -1833,12 +1839,12 @@ function App() {
             <span className="metric-label">Total Value Locked</span>
             <span className="metric-value">
               {streams
-                .filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive)
-                .reduce((acc, s) => acc + s.deposit, 0)
+                .filter(s => s.sender.toLowerCase() === account.toLowerCase() && !isStreamCompleted(s))
+                .reduce((acc, s) => acc + (s.deposit - s.withdrawn), 0)
                 .toFixed(2)} USDT
             </span>
             <span className="metric-subtext">
-              Across {streams.filter(s => s.sender.toLowerCase() === account.toLowerCase() && s.isActive).length} active streams
+              Across {streams.filter(s => s.sender.toLowerCase() === account.toLowerCase() && !isStreamCompleted(s)).length} active streams
             </span>
           </div>
           <div className="metric-card">
@@ -1880,7 +1886,7 @@ function App() {
           <div className="metric-card">
             <span className="metric-label">Active Income Streams</span>
             <span className="metric-value" style={{ color: "var(--accent-cyan)" }}>
-              {streams.filter(s => s.sender.toLowerCase() !== account.toLowerCase() && s.isActive).length}
+              {streams.filter(s => s.sender.toLowerCase() !== account.toLowerCase() && !isStreamCompleted(s)).length}
             </span>
             <span className="metric-subtext highlight">Streaming in real-time</span>
           </div>
@@ -1894,7 +1900,7 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Active Ticking Counter */}
-          {!currentActiveStream || !currentActiveStream.isActive ? (
+          {!currentActiveStream || isStreamCompleted(currentActiveStream) ? (
             <div className="glass-card" id="tour-ticker-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', textAlign: 'center' }}>
               <Activity size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', opacity: 0.5 }} />
               <h3 style={{ color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>No Active Stream Selected</h3>
@@ -2003,11 +2009,11 @@ function App() {
                       {paginated.map(stream => (
                         <div 
                           key={stream.id} 
-                          className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
+                          className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${isStreamCompleted(stream) ? 'depleted' : ''}`}
                           onClick={() => {
                             setSelectedDetailStream(stream);
                             setShowDetailModal(true);
-                            if (stream.isActive) {
+                            if (stream.isActive && !isStreamCompleted(stream)) {
                               setActiveStreamId(stream.id);
                             }
                           }}
@@ -2054,9 +2060,9 @@ function App() {
                   return filtered.map(stream => (
                     <div 
                       key={stream.id} 
-                      className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${!stream.isActive ? 'depleted' : ''}`}
-                      onClick={() => stream.isActive && setActiveStreamId(stream.id)}
-                      style={{ cursor: stream.isActive ? 'pointer' : 'default' }}
+                      className={`stream-card ${stream.id === activeStreamId ? 'active' : ''} ${stream.isPaused ? 'paused' : ''} ${isStreamCompleted(stream) ? 'depleted' : ''}`}
+                      onClick={() => !isStreamCompleted(stream) && setActiveStreamId(stream.id)}
+                      style={{ cursor: !isStreamCompleted(stream) ? 'pointer' : 'default' }}
                     >
                       <div className="stream-info">
                         <span className="stream-party">
@@ -2067,21 +2073,25 @@ function App() {
                           <span>Withdrawn: {stream.withdrawn.toFixed(2)} / {stream.deposit} USDT</span>
                           <span>Started: <span style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>{new Date(stream.startTime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></span>
                         </span>
-                        {!stream.isActive && (
+                        {(isStreamCompleted(stream) || !stream.isActive) && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
                             <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                              CANCELLED / DEPLETED
-                              <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <Award size={10} /> NFT Receipt Minted
-                              </span>
+                              {!stream.isActive ? "CANCELLED / ARCHIVED" : "COMPLETED / DEPLETED"}
+                              {!stream.isActive && (
+                                <span style={{ background: '#8b5cf6', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '0.2rem', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <Award size={10} /> NFT Receipt Minted
+                                </span>
+                              )}
                             </span>
-                            <button 
-                              className="btn" 
-                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem', alignSelf: 'flex-start', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid #8b5cf6', color: '#c084fc', cursor: 'pointer' }}
-                              onClick={() => handleViewReceipt(stream)}
-                            >
-                              View Receipt NFT
-                            </button>
+                            {!stream.isActive && (
+                              <button 
+                                className="btn" 
+                                style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem', alignSelf: 'flex-start', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid #8b5cf6', color: '#c084fc', cursor: 'pointer' }}
+                                onClick={() => handleViewReceipt(stream)}
+                              >
+                                View Receipt NFT
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -3295,29 +3305,41 @@ function App() {
             </div>
 
             {/* Actions for active stream */}
-            {selectedDetailStream.isActive && selectedDetailStream.withdrawn < selectedDetailStream.deposit && (
+            {selectedDetailStream.isActive && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                <button 
-                  className="btn btn-secondary"
-                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
-                  onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
-                >
-                  {selectedDetailStream.isPaused ? "Resume" : "Pause"}
-                </button>
-                <button 
-                  className="btn btn-danger"
-                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
-                  onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
-                >
-                  Cancel Stream
-                </button>
-                <button 
-                  className="btn"
-                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', border: '1px solid var(--state-warning)', color: 'var(--state-warning)', background: 'transparent' }}
-                  onClick={() => { handleDisputeStream(selectedDetailStream.id); setShowDetailModal(false); }}
-                >
-                  Dispute
-                </button>
+                {(!isStreamCompleted(selectedDetailStream)) ? (
+                  <>
+                    <button 
+                      className="btn btn-secondary"
+                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                      onClick={() => { toggleStreamPause(selectedDetailStream.id); setShowDetailModal(false); }}
+                    >
+                      {selectedDetailStream.isPaused ? "Resume" : "Pause"}
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem' }}
+                      onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                    >
+                      Cancel Stream
+                    </button>
+                    <button 
+                      className="btn"
+                      style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem 0.75rem', border: '1px solid var(--state-warning)', color: 'var(--state-warning)', background: 'transparent' }}
+                      onClick={() => { handleDisputeStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                    >
+                      Dispute
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    className="btn btn-primary"
+                    style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+                    onClick={() => { handleCancelStream(selectedDetailStream.id); setShowDetailModal(false); }}
+                  >
+                    Finalize & Close Stream (Mint NFT Receipt)
+                  </button>
+                )}
               </div>
             )}
 
