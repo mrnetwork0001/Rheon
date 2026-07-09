@@ -14,14 +14,14 @@ const TARGET_API_HEALTH_URL = process.env.TARGET_API_HEALTH_URL || "https://stat
 
 // Minimal ABI of BotFlowStreamer
 const STREAMER_ABI = [
-  "event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, address sentryNode)",
+  "event StreamCreated(uint256 indexed streamId, address indexed sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, address sentryNode)",
   "event StreamPaused(uint256 indexed streamId, address indexed by)",
   "event StreamResumed(uint256 indexed streamId, address indexed by, uint256 newStopTime)",
   "event StreamCancelled(uint256 indexed streamId, uint256 receiverAmount, uint256 senderAmount)",
   "function pauseStream(uint256 streamId) external",
   "function resumeStream(uint256 streamId) external",
   "function adjustStreamRate(uint256 streamId, uint256 newRatePerSecond) external",
-  "function streams(uint256 streamId) external view returns (address sender, address receiver, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isActive)",
+  "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
   "function getAccrued(uint256 streamId) public view returns (uint256)"
 ];
 
@@ -121,7 +121,7 @@ async function startSentryNode() {
 
           if (contract && wallet) {
             // Check if already paused first to avoid redundant transactions
-            const streamData = await contract.streams(streamId);
+            const streamData = await contract.getStream(streamId);
             const isPaused = streamData.isPaused;
             const isActive = streamData.isActive;
 
@@ -168,11 +168,11 @@ async function startSentryNode() {
         const createdFilter = contract.filters.StreamCreated();
         const createdEvents = await contract.queryFilter(createdFilter, fromBlock, toBlock);
         for (const event of createdEvents) {
-          const [streamId, sender, receiver, token, deposit, ratePerSecond, startTime, stopTime, sentryNode] = (event as any).args;
+          const [streamId, sender, receivers, sharePercentages, token, deposit, ratePerSecond, startTime, stopTime, sentryNode] = (event as any).args;
           if (wallet && sentryNode.toLowerCase() === wallet.address.toLowerCase()) {
             const id = Number(streamId);
             activeMonitoredStreams.add(id);
-            addLog("INFO", `Onchain Event (Log Polled): StreamCreated. Added stream ${id} (Receiver: ${receiver}) to Sentry monitoring list.`);
+            addLog("INFO", `Onchain Event (Log Polled): StreamCreated. Added stream ${id} (Receiver: ${receivers[0]}) to Sentry monitoring list.`);
           }
         }
 
