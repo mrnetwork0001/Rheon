@@ -2,6 +2,8 @@ import { ethers } from "ethers";
 import * as http from "http";
 import * as url from "url";
 import * as dotenv from "dotenv";
+import * as fs from "fs";
+import * as path from "path";
 
 dotenv.config();
 
@@ -38,6 +40,32 @@ let providerStatus: "HEALTHY" | "OUTAGE" | "DISPUTE" = "HEALTHY";
 let forceOutageMode = false;
 const activeMonitoredStreams = new Set<number>();
 
+// Auto-Resume preferences persistence
+const autoResumeSettingsFile = path.join(process.cwd(), "auto_resume_settings.json");
+const autoResumeStreams = new Set<number>();
+
+function loadAutoResumeSettings() {
+  try {
+    if (fs.existsSync(autoResumeSettingsFile)) {
+      const data = JSON.parse(fs.readFileSync(autoResumeSettingsFile, "utf8"));
+      if (Array.isArray(data)) {
+        data.forEach((id: number) => autoResumeStreams.add(id));
+        addLog("INFO", `Loaded auto-resume settings for streams: ${data.join(", ")}`);
+      }
+    }
+  } catch (err: any) {
+    addLog("WARNING", `Failed to load auto-resume settings: ${err.message}`);
+  }
+}
+
+function saveAutoResumeSettings() {
+  try {
+    fs.writeFileSync(autoResumeSettingsFile, JSON.stringify(Array.from(autoResumeStreams)), "utf8");
+  } catch (err: any) {
+    addLog("WARNING", `Failed to save auto-resume settings: ${err.message}`);
+  }
+}
+
 function addLog(type: LogEntry["type"], message: string) {
   const log: LogEntry = {
     timestamp: new Date().toISOString(),
@@ -52,6 +80,7 @@ function addLog(type: LogEntry["type"], message: string) {
 
 async function startSentryNode() {
   addLog("INFO", "Starting Rheon AI Sentry Node...");
+  loadAutoResumeSettings();
   addLog("INFO", `Connecting to BOTChain RPC: ${RPC_URL}`);
 
   let provider: ethers.JsonRpcProvider;
@@ -131,13 +160,10 @@ async function startSentryNode() {
     addLog("INFO", `Active streams to monitor: ${Array.from(activeMonitoredStreams).join(", ")}. Status: ${providerStatus}`);
 
     if (providerStatus !== "HEALTHY") {
-      // Outage or dispute detected! AI Sentry intervenes
+      // Outage or dispute detected! AI Sentry intervenes to pause
       for (const streamId of activeMonitoredStreams) {
         try {
-          addLog("WARNING", `Outage/Dispute detected for stream ${streamId}! Initiating AI Sentry onchain intervention...`);
-
           if (contract && wallet) {
-            // Check if already paused first to avoid redundant transactions
             const streamData = await contract.getStream(streamId);
             const isPaused = streamData.isPaused;
             const isActive = streamData.isActive;
@@ -149,23 +175,54 @@ async function startSentryNode() {
             }
 
             if (!isPaused) {
+              addLog("WARNING", `Outage/Dispute detected for stream ${streamId}! Initiating AI Sentry onchain pause...`);
               addLog("ACTION", `Sending pause transaction for stream ${streamId} to BOTChain...`);
-              
-              // Send transaction with gas optimal parameters for BOTChain
               const tx = await contract.pauseStream(streamId);
               addLog("INFO", `Intervention transaction submitted. Tx Hash: ${tx.hash}`);
-              
-              // Wait for sub-second confirmation on BOTChain
               const receipt = await tx.wait();
               addLog("ACTION", `Intervention confirmed in block ${receipt.blockNumber}! Stream ${streamId} paused successfully.`);
-            } else {
-              addLog("INFO", `Stream ${streamId} is already paused. Monitoring continues.`);
             }
           } else {
             addLog("ACTION", `[DRY-RUN] Would have paused stream ${streamId} onchain.`);
           }
         } catch (error: any) {
-          addLog("ERROR", `Intervention failed for stream ${streamId}: ${error.message}`);
+          addLog("ERROR", `Intervention (Pause) failed for stream ${streamId}: ${error.message}`);
+        }
+      }
+    } else {
+      // API is HEALTHY! Auto-resume streams that allow it
+      for (const streamId of activeMonitoredStreams) {
+        try {
+          if (contract && wallet) {
+            const streamData = await contract.getStream(streamId);
+            const isPaused = streamData.isPaused;
+            const isActive = streamData.isActive;
+
+            if (!isActive) {
+              activeMonitoredStreams.delete(streamId);
+              addLog("INFO", `Stream ${streamId} is no longer active. Removed from monitoring.`);
+              continue;
+            }
+
+            if (isPaused) {
+              if (autoResumeStreams.has(streamId)) {
+                addLog("INFO", `API healthy & auto-resume enabled for stream ${streamId}. Initiating AI Sentry onchain resume...`);
+                addLog("ACTION", `Sending resume transaction for stream ${streamId} to BOTChain...`);
+                const tx = await contract.resumeStream(streamId);
+                addLog("INFO", `Resumption transaction submitted. Tx Hash: ${tx.hash}`);
+                const receipt = await tx.wait();
+                addLog("ACTION", `Resumption confirmed in block ${receipt.blockNumber}! Stream ${streamId} resumed successfully.`);
+              } else {
+                addLog("INFO", `Stream ${streamId} is paused but auto-resume is disabled. Awaiting manual creator resumption.`);
+              }
+            }
+          } else {
+            if (autoResumeStreams.has(streamId)) {
+              addLog("ACTION", `[DRY-RUN] Would have resumed stream ${streamId} onchain.`);
+            }
+          }
+        } catch (error: any) {
+          addLog("ERROR", `Resumption failed for stream ${streamId}: ${error.message}`);
         }
       }
     }
@@ -249,6 +306,7 @@ async function startSentryNode() {
           providerStatus: providerStatus,
           forceOutageMode: forceOutageMode,
           monitoredStreams: Array.from(activeMonitoredStreams),
+          autoResumeStreams: Array.from(autoResumeStreams),
           sentryAddress: wallet ? wallet.address : "0x0000000000000000000000000000000000000000",
           contractAddress: STREAMER_CONTRACT_ADDRESS
         })
@@ -264,6 +322,35 @@ async function startSentryNode() {
     } else if (pathname === "/logs" && req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(logs));
+    } else if (pathname === "/set-auto-resume" && req.method === "POST") {
+      let body = "";
+      req.on("data", chunk => {
+        body += chunk.toString();
+      });
+      req.on("end", () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.streamId !== undefined && data.autoResume !== undefined) {
+            const streamId = Number(data.streamId);
+            if (data.autoResume) {
+              autoResumeStreams.add(streamId);
+              addLog("INFO", `Enabled auto-resume preference for Stream ${streamId}`);
+            } else {
+              autoResumeStreams.delete(streamId);
+              addLog("INFO", `Disabled auto-resume preference for Stream ${streamId}`);
+            }
+            saveAutoResumeSettings();
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ status: "success", autoResumeStreams: Array.from(autoResumeStreams) }));
+          } else {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Missing streamId or autoResume" }));
+          }
+        } catch (e) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid JSON" }));
+        }
+      });
     } else if (pathname === "/register" && req.method === "POST") {
       // Manual registration for off-chain or testing streams
       let body = "";

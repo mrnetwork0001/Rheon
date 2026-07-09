@@ -393,7 +393,8 @@ function App() {
     receiver: "",
     deposit: "",
     rate: "0.1",
-    sentry: "0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED"
+    sentry: "0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED",
+    autoResume: false
   });
   const [sentrySelectMode, setSentrySelectMode] = useState("0x1da055Ccfd7efa30Edccee7f0319BF989aB0EeED");
   const [activeTour, setActiveTour] = useState(null);
@@ -1045,7 +1046,25 @@ function App() {
        
       // Find the newest stream to set as active
       const nextId = await streamerContract.nextStreamId();
-      setActiveStreamId(Number(nextId) - 1);
+      const newStreamId = Number(nextId) - 1;
+      setActiveStreamId(newStreamId);
+
+      // Register Sentry Auto-Resume preference
+      try {
+        await fetch(`${SENTRY_API_URL}/set-auto-resume`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            streamId: newStreamId,
+            autoResume: newStream.autoResume
+          })
+        });
+        addSentryLog("INFO", `Auto-resume preference set to ${newStream.autoResume} for stream ${newStreamId}`);
+      } catch (err) {
+        console.error("Failed to register auto-resume preference with Sentry:", err);
+      }
     } catch (error) {
       console.error(error);
       addSentryLog("ERROR", `Failed to create stream: ${error.message}`);
@@ -2234,6 +2253,20 @@ function App() {
                     required
                   />
                 )}
+              </div>
+
+              {/* Sentry Auto-Resume Opt-in Toggle */}
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', background: 'rgba(255, 255, 255, 0.02)', padding: '0.75rem 1rem', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)' }}>
+                <input 
+                  type="checkbox" 
+                  id="auto-resume-checkbox"
+                  checked={newStream.autoResume}
+                  onChange={e => setNewStream({ ...newStream, autoResume: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                />
+                <label htmlFor="auto-resume-checkbox" style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', cursor: 'pointer', userSelect: 'none', fontWeight: '500', margin: 0 }}>
+                  Allow Sentry Auto-Resume (Auto-restart once API returns online)
+                </label>
               </div>
 
               {/* Feature 1 UI: Revenue Splitting Breakdown */}
