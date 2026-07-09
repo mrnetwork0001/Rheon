@@ -21,6 +21,7 @@ const STREAMER_ABI = [
   "function pauseStream(uint256 streamId) external",
   "function resumeStream(uint256 streamId) external",
   "function adjustStreamRate(uint256 streamId, uint256 newRatePerSecond) external",
+  "function nextStreamId() view returns (uint256)",
   "function getStream(uint256 streamId) view returns (tuple(address sender, address[] receivers, uint256[] sharePercentages, address token, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 remainingBalance, uint256 accruedUntilLastUpdate, uint256 withdrawnAmount, uint256 lastUpdateTime, address sentryNode, bool isPaused, bool isDisputed, bool isActive))",
   "function getAccrued(uint256 streamId) public view returns (uint256)"
 ];
